@@ -1,0 +1,48 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite both the software and the underlying DeepCR paper."
+type: software
+title: "BB-Astro_DeepCosmicRay"
+abstract: "Professional Python implementation of DeepCR for cosmic ray removal in 32-bit astronomical FITS images"
+authors:
+  - family-names: "Blanco"
+    given-names: "Benoit"
+    email: "contact@bb-astro.com"
+version: "2.1"
+date-released: "2025-11-14"
+license: "CC-BY-NC-SA-4.0"
+repository-code: "https://github.com/benoitblanco/deepcosmic"
+keywords:
+  - astronomy
+  - cosmic-rays
+  - image-processing
+  - deep-learning
+  - fits
+  - astrophotography
+
+preferred-citation:
+  type: article
+  authors:
+    - family-names: "Zhang"
+      given-names: "Keming"
+    - family-names: "Bloom"
+      given-names: "Joshua S."
+  title: "Identifying Cosmic Rays in Astronomical Images Using Deep Learning"
+  journal: "The Astrophysical Journal"
+  volume: 889
+  issue: 1
+  year: 2020
+  month: 1
+  doi: "10.3847/1538-4357/ab3fa6"
+  url: "https://arxiv.org/abs/2001.01863"
+
+references:
+  - type: software
+    title: "DeepCR"
+    authors:
+      - family-names: "Zhang"
+        given-names: "Keming"
+      - family-names: "Bloom"
+        given-names: "Joshua S."
+    repository-code: "https://github.com/profjsb/deepCR"
+    license: "BSD-3-Clause"
+    version: "0.3.1"

@@ -1,0 +1,73 @@
+BB-Astro DeepCosmicRay PixInsight Module
+License Information
+================================================================================
+
+This software consists of two components with different licenses:
+
+================================================================================
+MODULE WRAPPER - BB-Astro_DeepCosmicRay
+================================================================================
+
+Copyright © 2025 Benoit Blanco (BB-Astro)
+
+This work is licensed under the Creative Commons
+Attribution-NonCommercial-ShareAlike 4.0 International License.
+
+To view a copy of this license, visit:
+https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+YOU ARE FREE TO:
+  - Share: copy and redistribute the material
+  - Adapt: remix, transform, and build upon the material
+
+UNDER THE FOLLOWING TERMS:
+  - Attribution: You must give appropriate credit to Benoit Blanco
+  - NonCommercial: You may not use the material for commercial purposes
+  - ShareAlike: Distribute modifications under the same CC BY-NC-SA 4.0 license
+
+NO WARRANTIES: This software is provided "as is" without warranty of any kind.
+
+================================================================================
+DEEPCR LIBRARY (Dependency)
+================================================================================
+
+Copyright © 2019, The Regents of the University of California
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice.
+2. Redistributions in binary form must reproduce the above copyright notice
+   in the documentation and/or other materials provided.
+3. Neither the name of the copyright holder nor contributors may be used to
+   endorse or promote products derived from this software without permission.
+
+THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND.
+
+Full BSD-3-Clause license: https://opensource.org/licenses/BSD-3-Clause
+
+================================================================================
+CITATIONS
+================================================================================
+
+If you use this software, please cite:
+
+DeepCR:
+  Zhang, K., & Bloom, J. S. (2020).
+  Identifying Cosmic Rays in Astronomical Images Using Deep Learning.
+  The Astrophysical Journal, 889(1), 24.
+  DOI: 10.3847/1538-4357/ab3fa6
+
+BB-Astro_DeepCosmicRay:
+  Blanco, B. (2025).
+  BB-Astro DeepCosmicRay: PixInsight Module for Deep Learning CR Removal.
+  https://github.com/benoitblanco/deepcosmic
+
+================================================================================
+CONTACT
+================================================================================
+
+Author: Benoit Blanco (BB-Astro)
+Website: https://www.bb-astro.com
+GitHub: https://github.com/benoitblanco/deepcosmic
