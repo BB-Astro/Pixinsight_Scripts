@@ -57,14 +57,14 @@ chmod +x ~/.local/share/PixInsight/src/scripts/run_lacosmic.sh
 
 **Then restart PixInsight.**
 
-Find the script in: **Script → Utilities → BB_Astro_LACosmic**
+Find the script in: **Script → BB-Astro → LAcosmic**
 
 ---
 
 ## How to Use
 
 1. Open your astronomical image in PixInsight
-2. Run: **Script → Utilities → BB_Astro_LACosmic**
+2. Run: **Script → BB-Astro → LAcosmic**
 3. Click **"Clean Cosmic Rays"** (defaults are optimized)
 4. A new window opens with the cleaned image
 5. **Always inspect the result** to verify stars are intact

@@ -10,7 +10,8 @@
 // DeepCR: Copyright (c) 2019 The Regents of the University of California, BSD-3-Clause License
 // ----------------------------------------------------------------------------
 
-#feature-id BB_Astro_DeepCosmicRay : Utilities > BB_Astro_DeepCosmicRay
+#feature-id BB_Astro_DeepCosmicRay : BB-Astro > DeepCosmicRay
+#feature-icon  ./Favicon_DeepCR.svg
 
 #feature-info <b>BB Astro - DeepCosmicRay</b> &mdash; Deep learning cosmic ray removal for astronomical images.<br/>\
    <br/>\

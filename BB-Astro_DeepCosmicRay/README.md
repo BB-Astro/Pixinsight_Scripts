@@ -83,7 +83,7 @@ DeepCR uses a **convolutional neural network** trained on 15,000+ real Hubble Sp
 5. **Restart PixInsight**
 
 6. **Find the module**:
-   Scripts → Utilities → **BB_Astro_DeepCosmicRay**
+   Scripts → BB-Astro → **DeepCosmicRay**
 
 ### Verify Installation
 
@@ -102,7 +102,7 @@ Should show: `✅ ALL TESTS PASSED`
 1. **Open an image** in PixInsight (XISF or FITS, 16-bit or 32-bit)
 
 2. **Run the module**:
-   Scripts → Utilities → BB_Astro_DeepCosmicRay
+   Scripts → BB-Astro → DeepCosmicRay
 
 3. **Choose a preset**:
    - **Optimal** (recommended for most images)
@@ -343,7 +343,7 @@ This example shows:
 ### Example 1: Single Image Processing
 ```
 1. Open your image (e.g., Arp204.xisf) in PixInsight
-2. Scripts → Utilities → BB_Astro_DeepCosmicRay
+2. Scripts → BB-Astro → DeepCosmicRay
 3. Select "Optimal" preset
 4. Click Execute
 5. Wait ~10 seconds

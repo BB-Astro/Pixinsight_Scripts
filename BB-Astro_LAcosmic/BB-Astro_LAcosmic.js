@@ -15,7 +15,8 @@
 // Distributed under the MIT License
 // ----------------------------------------------------------------------------
 
-#feature-id BB_Astro_LACosmic : Utilities > BB_Astro_LACosmic
+#feature-id BB_Astro_LACosmic : BB-Astro > LAcosmic
+#feature-icon  ./favicon_LACOSMIC.svg
 
 #feature-info <b>BB-Astro LACosmic</b> &mdash; Professional cosmic ray removal for astronomical imaging.<br/>\
    <br/>\

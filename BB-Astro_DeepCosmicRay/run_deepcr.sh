@@ -9,7 +9,8 @@ set -eo pipefail
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Python executable - use dedicated venv first, then try multiple locations
-VENV_PYTHON="${SCRIPT_DIR}/deepcr_venv/bin/python3"
+# Venv is stored in ~/.bb-astro to avoid PixInsight scanning thousands of files
+VENV_PYTHON="${HOME}/.bb-astro/deepcr_venv/bin/python3"
 PYTHON=""
 
 # Try in order of preference
