@@ -191,6 +191,7 @@ def load_image(filename):
             # Store flag to adjust noise parameters later
             header['BBRESCAL'] = (True, 'BB rescaled from normalized')
             header['BBRSCFAC'] = (rescale_factor, 'BB rescale factor')
+            header['BBRSCOFF'] = (rescale_offset, 'BB rescale offset')
 
         return data.astype(np.float64), header, rescale_factor, rescale_offset
 
@@ -207,6 +208,11 @@ def save_fits(filename, data, header, history_msg=None, rescale_factor=1.0, resc
             print(f"\nRestoring original image scale...", file=sys.stderr)
             data = (data / rescale_factor) + rescale_offset
             print(f"  Restored range: {data.min():.6f} → {data.max():.6f}", file=sys.stderr)
+            # Update header to reflect restoration
+            header['BBRESCAL'] = (False, 'BB restored to original normalized scale')
+            for kw in ('BBRSCFAC', 'BBRSCOFF'):
+                if kw in header:
+                    del header[kw]
 
         # Create a clean copy of the header to avoid CONTINUE card issues
         clean_header = fits.Header()
