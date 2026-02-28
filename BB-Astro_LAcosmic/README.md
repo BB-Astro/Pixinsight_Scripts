@@ -37,6 +37,13 @@ BB-Astro LACosmic detects and removes cosmic ray hits from your astronomical ima
 pip3 install astroscrappy astropy numpy
 ```
 
+Minimum tested versions: `astropy>=5.0`, `numpy>=1.20`, `astroscrappy>=1.1.0`
+
+**Apple Silicon (M1/M2/M3):** use Homebrew Python for best compatibility:
+```bash
+/opt/homebrew/bin/pip3 install astroscrappy astropy numpy
+```
+
 ### Install in PixInsight
 
 **macOS:**
@@ -152,11 +159,17 @@ Tested on **NGC5335 HST F814W** (2683×2455 pixels, 32-bit float):
 
 ## Troubleshooting
 
-### "ModuleNotFoundError: No module named 'numpy'"
+### "ModuleNotFoundError: No module named 'numpy'" (or astroscrappy / astropy)
 
-Install packages in the correct Python:
+PixInsight may not use the same Python as your terminal. Install into the Python that the script detects first (Homebrew on Apple Silicon, system Python on Linux):
 ```bash
+# Apple Silicon (M1/M2/M3)
 /opt/homebrew/bin/python3 -m pip install astroscrappy astropy numpy
+
+# Intel Mac / Linux
+/usr/local/bin/python3 -m pip install astroscrappy astropy numpy
+# or
+/usr/bin/python3 -m pip install astroscrappy astropy numpy
 ```
 
 ### "Stars are being removed"
@@ -189,8 +202,20 @@ Implementation: **astroscrappy** - https://github.com/astropy/astroscrappy
 - Auto-rescaling for 32-bit float normalized images (0-1 range)
 - Process icon support (triangle button)
 - Visual parameter validation
-- Works with FITS and XISF formats
-- Cross-platform Python detection
+- Works with FITS format (XISF images must be exported to FITS first from PixInsight)
+- Cross-platform Python detection (Homebrew, system, user installs)
+
+### FITS Header Keywords
+
+When the input image is normalized (0–1 range), the script temporarily rescales it to 16-bit ADU for processing, then restores the original range on save. The following keywords are written to the input FITS header during processing and removed from the output:
+
+| Keyword | Value | Description |
+|---------|-------|-------------|
+| `BBRESCAL` | `True` during processing, `False` in output | Whether the image was auto-rescaled |
+| `BBRSCFAC` | float | Rescale factor applied (present in input only) |
+| `BBRSCOFF` | float | Rescale offset applied (present in input only) |
+
+The output FITS file is always saved in the original pixel value range.
 
 ---
 

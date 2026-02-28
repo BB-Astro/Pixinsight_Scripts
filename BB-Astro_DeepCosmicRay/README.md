@@ -52,10 +52,17 @@ DeepCR uses a **convolutional neural network** trained on 15,000+ real Hubble Sp
 
 - **PixInsight**: Any recent version with script support
 - **Python**: 3.7 or later
-- **OS**: macOS or Linux (Windows: manual Python setup needed)
+- **OS**: macOS or Linux (Windows: not officially supported — Python path detection uses Unix paths)
 - **RAM**: 4GB minimum, 8GB recommended
-- **Disk**: 500MB for models and dependencies
+- **Disk**: ~500MB for virtualenv + PyTorch models (~100MB downloaded on first run)
 - **Internet**: First run downloads DeepCR models (~100MB)
+
+Minimum package versions (see `requirements.txt`): `deepCR>=0.3.1`, `astropy>=5.0`, `numpy>=1.20`, `torch>=1.9`, `xisf>=0.9.5`
+
+**Apple Silicon (M1/M2/M3):** the installer uses `/opt/homebrew/bin/python3` by default. Ensure Homebrew Python is installed:
+```bash
+brew install python3
+```
 
 ### Quick Install
 
@@ -240,9 +247,18 @@ brew install python3  # macOS with Homebrew
 ```
 
 ### "DeepCR not installed"
-Run manually:
+Run manually using the same Python the script uses (Homebrew on Apple Silicon):
 ```bash
-python3 -m pip install --user deepCR astropy numpy torch xisf
+# Apple Silicon (M1/M2/M3)
+/opt/homebrew/bin/pip3 install deepCR astropy numpy torch xisf
+
+# Intel Mac / Linux
+/usr/local/bin/pip3 install deepCR astropy numpy torch xisf
+```
+
+Or re-run the installer which creates a dedicated virtualenv:
+```bash
+./install.sh
 ```
 
 ### "Wrapper script not found"

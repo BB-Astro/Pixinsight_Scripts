@@ -3,5 +3,5 @@ astropy>=5.0
 numpy>=1.20
 torch>=1.9
 scikit-image>=0.18
-matplotlib>=3.0
 xisf>=0.9.5
+# matplotlib is not used by deepcr_cli.py but may be required by deepCR internals
