@@ -35,14 +35,16 @@ PACKAGES="numpy astropy astroscrappy"
 # ======================================================================
 # Step 1: Find an interpreter
 # ======================================================================
-# astroscrappy publishes wheels for CPython 3.10 through 3.14, so any
-# reasonably current Python 3 works. Only a floor is enforced.
-echo -e "${BLUE}[1/3]${NC} Looking for Python 3..."
+# astroscrappy 1.3.0 declares requires_python ">=3.10" and ships wheels for
+# CPython 3.10 through 3.14, so anything current works. Only a floor is
+# enforced: on 3.9 pip would silently resolve to an ancient release or fall
+# back to compiling the Cython extension from source.
+echo -e "${BLUE}[1/3]${NC} Looking for Python 3.10 or later..."
 
 PYTHON=""
 
 version_ok() {
-    "$1" -c 'import sys; sys.exit(0 if sys.version_info[:2] >= (3,9) else 1)' 2>/dev/null
+    "$1" -c 'import sys; sys.exit(0 if sys.version_info[:2] >= (3,10) else 1)' 2>/dev/null
 }
 
 CANDIDATES=(
@@ -63,7 +65,7 @@ for candidate in "${CANDIDATES[@]}"; do
 done
 
 if [ -z "$PYTHON" ]; then
-    echo -e "${RED}ERROR:${NC} No Python 3.9 or later found."
+    echo -e "${RED}ERROR:${NC} No Python 3.10 or later found."
     echo ""
     echo "Install one, then run this script again:"
     echo "  macOS:  brew install python3"

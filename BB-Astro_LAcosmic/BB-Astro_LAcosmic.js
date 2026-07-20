@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // BB-Astro_LAcosmic.js - Professional Cosmic Ray Removal for PixInsight
 // ----------------------------------------------------------------------------
-// Version: 1.0.2
+// Version: 1.0.3
 // Author: Benoit Blanco (BB)
 //
 // Implements the L.A.Cosmic algorithm (van Dokkum 2001) for detecting and
@@ -82,7 +82,7 @@
 #include <pjsr/SampleType.jsh>
 
 #define TITLE "BB-Astro LACosmic"
-#define VERSION "1.0.2"
+#define VERSION "1.0.3"
 
 // Global settings object - V3 Optimized Parameters
 // Tested on NGC5335 HST data: +24.4% more CRs detected vs baseline
