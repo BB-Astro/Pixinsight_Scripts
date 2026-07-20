@@ -2,10 +2,10 @@
 
 **Deep Learning Cosmic Ray Removal for PixInsight**
 
-[![Version](https://img.shields.io/badge/version-2.1-blue)](https://github.com/benoitblanco/deepcosmic/releases)
+[![Version](https://img.shields.io/badge/version-2.1.2-blue)](https://github.com/BB-Astro/Pixinsight_Scripts)
 [![License](https://img.shields.io/badge/license-CC_BY--NC--SA_4.0-orange)](LICENSE)
 [![PixInsight](https://img.shields.io/badge/PixInsight-Compatible-green)](https://pixinsight.com)
-[![Python](https://img.shields.io/badge/python-3.7+-blue)](https://www.python.org)
+[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11-blue)](https://www.python.org)
 
 Professional cosmic ray detection and removal using state-of-the-art deep learning ([DeepCR](https://github.com/profjsb/deepCR) by Zhang & Bloom 2020).
 
@@ -51,54 +51,69 @@ DeepCR uses a **convolutional neural network** trained on 15,000+ real Hubble Sp
 ### Requirements
 
 - **PixInsight**: Any recent version with script support
-- **Python**: 3.7 or later
-- **OS**: macOS or Linux (Windows: not officially supported — Python path detection uses Unix paths)
+- **Python**: **3.10 or 3.11**, and both ends are hard limits (see below)
+- **OS**: macOS or Linux. The script drives Python through a shell wrapper, so Windows is not supported.
 - **RAM**: 4GB minimum, 8GB recommended
-- **Disk**: ~500MB for virtualenv + PyTorch models (~100MB downloaded on first run)
-- **Internet**: First run downloads DeepCR models (~100MB)
+- **Disk**: about 850 MB for the virtual environment, almost all of it PyTorch
+- **Internet**: only to download the packages. The pretrained weights ship inside the `deepcr` package (about 5 MB), nothing is fetched at runtime.
 
-Minimum package versions (see `requirements.txt`): `deepCR>=0.3.1`, `astropy>=5.0`, `numpy>=1.20`, `torch>=1.9`, `xisf>=0.9.5`
+Package versions: see `requirements.txt`.
 
-**Apple Silicon (M1/M2/M3):** the installer uses `/opt/homebrew/bin/python3` by default. Ensure Homebrew Python is installed:
-```bash
-brew install python3
+#### Why the Python version window is so narrow
+
+- **Floor:** `torch` declares `requires_python >=3.10`.
+- **Ceiling:** `deepcr` publishes a source distribution only, never a wheel, and its `setup.py` uses `ast.Str.s`, removed in Python 3.12. On 3.12 and later the build dies with `AttributeError: 'Constant' object has no attribute 's'`.
+
+So `pip3 install deepcr` on a current system Python fails. `install_deepcr.sh` handles this: it looks for a 3.10/3.11 interpreter, and falls back to fetching a standalone CPython 3.11 through [uv](https://docs.astral.sh/uv/) if you have it.
+
+One more trap it works around: **`deepcr` declares no dependencies at all on PyPI**, yet `deepCR/training.py` imports `matplotlib` when the package is imported. Without it, `from deepCR import deepCR` raises `ModuleNotFoundError`.
+
+### Step 1: Install the script
+
+Add the BB-Astro repository in **Resources > Updates > Manage Repositories**:
+
+```
+https://bb-astro.github.io/BB-Astro_Repository/
 ```
 
-### Quick Install
+Then **Resources > Updates > Check for Updates**, select DeepCosmicRay, apply, and restart PixInsight.
 
-1. **Download** the [latest release](https://github.com/benoitblanco/deepcosmic/releases/latest)
+Find the module in: **Script → BB-Astro → DeepCosmicRay**
 
-2. **Extract** the ZIP file
+### Step 2: Set up Python
 
-3. **Open Terminal** and navigate to the folder:
-   ```bash
-   cd BB-Astro_DeepCosmicRay
-   ```
+Run the setup script once from a Terminal:
 
-4. **Run installer**:
-   ```bash
-   chmod +x install_deepcr.sh
-   ./install_deepcr.sh
-   ```
+```bash
+bash /Applications/PixInsight/src/scripts/BB-Astro/install_deepcr.sh
+```
 
-   This will:
-   - Check Python installation
-   - Create virtual environment
-   - Install dependencies (DeepCR, PyTorch, xisf, etc.)
-   - Copy module to PixInsight scripts folder (macOS/Linux)
+On Linux the path is `/opt/PixInsight/src/scripts/BB-Astro/` by default.
 
-5. **Restart PixInsight**
+It creates `~/.bb-astro/deepcr_venv`, installs the packages, and verifies that both models the module uses (`ACS-WFC` and `WFC3-UVIS`) load. If you skip this step, the module tells you so when you launch it rather than failing on your image.
 
-6. **Find the module**:
-   Scripts → BB-Astro → **DeepCosmicRay**
+If no suitable interpreter is found:
+
+```bash
+# macOS
+brew install python@3.11
+# Debian / Ubuntu
+sudo apt install python3.11 python3.11-venv
+```
+
+Or point the installer at a specific one:
+
+```bash
+BB_ASTRO_PYTHON=/path/to/python3.11 bash .../install_deepcr.sh
+```
 
 ### Verify Installation
 
 ```bash
-python3 test_installation.py
+bash /Applications/PixInsight/src/scripts/BB-Astro/run_deepcr.sh --probe
 ```
 
-Should show: `✅ ALL TESTS PASSED`
+Prints the interpreter that will actually be used, or explains what is missing.
 
 ---
 
@@ -123,7 +138,7 @@ Should show: `✅ ALL TESTS PASSED`
 
 6. **New window appears** with cleaned image
 
-**First run**: Downloads models (~100MB), subsequent runs are fast.
+**First run** is a few seconds slower because PyTorch has to be imported. The pretrained weights are already on disk, inside the `deepcr` package, so nothing is downloaded.
 
 ### Understanding Presets
 
@@ -240,37 +255,37 @@ Threshold: 0.2
 
 ## Troubleshooting
 
-### "Python 3 not found"
-Install Python from [python.org](https://www.python.org) or:
+### "Python dependencies for DeepCR are missing"
+
+The setup script has not been run, or its virtual environment was removed:
+
 ```bash
-brew install python3  # macOS with Homebrew
+bash /Applications/PixInsight/src/scripts/BB-Astro/install_deepcr.sh
 ```
 
-### "DeepCR not installed"
-Run manually using the same Python the script uses (Homebrew on Apple Silicon):
-```bash
-# Apple Silicon (M1/M2/M3)
-/opt/homebrew/bin/pip3 install deepCR astropy numpy torch xisf
+Then restart PixInsight. To see which interpreter the module would use:
 
-# Intel Mac / Linux
-/usr/local/bin/pip3 install deepCR astropy numpy torch xisf
+```bash
+bash /Applications/PixInsight/src/scripts/BB-Astro/run_deepcr.sh --probe
 ```
 
-Or re-run the installer which creates a dedicated virtualenv:
-```bash
-./install_deepcr.sh
-```
+It prints the first candidate that actually has `deepCR`, `torch` and `xisf`, searching `~/.bb-astro/deepcr_venv` first, then the system interpreters. Setting `PYTHON_EXECUTABLE` overrides the search entirely.
+
+### `deepcr` fails to build: "'Constant' object has no attribute 's'"
+
+Your Python is 3.12 or newer. `deepcr`'s `setup.py` uses `ast.Str.s`, which was removed in 3.12, and there is no wheel to fall back on. Install Python 3.11 and run the setup script again.
+
+### `pip` refuses with "externally-managed-environment"
+
+Expected. Your Python is protected by PEP 668. Use `install_deepcr.sh`, which installs into its own virtual environment.
+
+### `ModuleNotFoundError: No module named 'matplotlib'`
+
+`deepcr` declares no dependencies on PyPI but imports matplotlib at package import time. `install_deepcr.sh` installs it; a hand-rolled `pip install deepcr torch xisf` does not.
 
 ### "Wrapper script not found"
-Ensure all files are in same directory:
-- BB_DeepCosmicRay.js
-- deepcr_cli.py
-- run_deepcr.sh
 
-Edit `run_deepcr.sh` if needed to update Python path.
-
-### First run very slow
-Normal - downloads DeepCR models (~100MB) on first use. Subsequent runs are fast.
+The installation is incomplete. Reinstall DeepCosmicRay from **Resources > Updates** in PixInsight. `BB_DeepCosmicRay.js`, `deepcr_cli.py` and `run_deepcr.sh` must all sit in the same directory, which the package guarantees.
 
 ### Too many stars flagged
 Increase threshold (try 0.15 or 0.2) or use Conservative preset.
@@ -401,9 +416,9 @@ DOI: 10.3847/1538-4357/ab3fa6
 
 ### This Module (optional):
 ```
-Blanco, B. (2025).
+Blanco, B. (2026).
 BB-Astro DeepCosmicRay: PixInsight Module for Deep Learning Cosmic Ray Removal.
-https://github.com/benoitblanco/deepcosmic
+https://github.com/BB-Astro/Pixinsight_Scripts
 ```
 
 BibTeX available in [CITATION.cff](CITATION.cff)
@@ -449,7 +464,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/benoitblanco/deepcosmic/issues)
+- **Issues**: [GitHub Issues](https://github.com/BB-Astro/Pixinsight_Scripts/issues)
 - **Website**: [www.bb-astro.com](https://www.bb-astro.com)
 - **Email**: contact@bb-astro.com
 

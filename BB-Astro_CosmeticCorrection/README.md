@@ -33,29 +33,21 @@ The script uses automatic detection based on sigma thresholds to identify and co
 ### Requirements
 
 - **PixInsight**: Any recent version with script support
+- **No Python.** This script is pure PJSR and works on every platform PixInsight runs on.
 
 ### Install in PixInsight
 
-1. Copy `BB_CosmeticCorrection.js` to your PixInsight scripts folder:
+1. Add the BB-Astro repository in **Resources > Updates > Manage Repositories**:
 
-**macOS:**
-```bash
-cp BB_CosmeticCorrection.js /Applications/PixInsight/src/scripts/
+```
+https://bb-astro.github.io/BB-Astro_Repository/
 ```
 
-**Linux:**
-```bash
-cp BB_CosmeticCorrection.js ~/.local/share/PixInsight/src/scripts/
-```
+2. Go to **Resources > Updates > Check for Updates**, select CosmeticCorrection, and click **Apply**.
 
-**Alternative method:**
-- In PixInsight: `Script > Feature Scripts...`
-- Click "Add" and select the folder containing this script
-- Click "Done"
+3. **Restart PixInsight**
 
-2. **Restart PixInsight**
-
-3. Find the script in: **Script > BB-Astro > CosmeticCorrection**
+4. Find the script in: **Script > BB-Astro > CosmeticCorrection**
 
 ---
 

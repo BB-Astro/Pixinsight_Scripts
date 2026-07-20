@@ -7,10 +7,10 @@ authors:
   - family-names: "Blanco"
     given-names: "Benoit"
     email: "contact@bb-astro.com"
-version: "2.1"
-date-released: "2025-11-14"
+version: "2.1.2"
+date-released: "2026-07-20"
 license: "CC-BY-NC-SA-4.0"
-repository-code: "https://github.com/benoitblanco/deepcosmic"
+repository-code: "https://github.com/BB-Astro/Pixinsight_Scripts"
 keywords:
   - astronomy
   - cosmic-rays

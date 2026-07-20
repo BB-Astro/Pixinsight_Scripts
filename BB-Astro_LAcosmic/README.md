@@ -31,40 +31,40 @@ BB-Astro LACosmic detects and removes cosmic ray hits from your astronomical ima
 ### Requirements
 
 - **PixInsight** (any recent version)
-- **Python 3.7+** with packages:
+- **Python 3.10 or later**, matching astroscrappy's `requires_python >=3.10`
+- **macOS or Linux.** The script drives Python through a shell wrapper, so Windows is not supported.
 
-```bash
-pip3 install astroscrappy astropy numpy
+### Step 1: Install the script
+
+Add the BB-Astro repository in **Resources > Updates > Manage Repositories**:
+
+```
+https://bb-astro.github.io/BB-Astro_Repository/
 ```
 
-Minimum tested versions: `astropy>=5.0`, `numpy>=1.20`, `astroscrappy>=1.1.0`
-
-**Apple Silicon (M1/M2/M3):** use Homebrew Python for best compatibility:
-```bash
-/opt/homebrew/bin/pip3 install astroscrappy astropy numpy
-```
-
-### Install in PixInsight
-
-**macOS:**
-```bash
-sudo cp BB-Astro_LAcosmic.js /Applications/PixInsight/src/scripts/
-sudo cp lacosmic_cli.py /Applications/PixInsight/src/scripts/
-sudo cp run_lacosmic.sh /Applications/PixInsight/src/scripts/
-sudo chmod +x /Applications/PixInsight/src/scripts/run_lacosmic.sh
-```
-
-**Linux:**
-```bash
-cp BB-Astro_LAcosmic.js ~/.local/share/PixInsight/src/scripts/
-cp lacosmic_cli.py ~/.local/share/PixInsight/src/scripts/
-cp run_lacosmic.sh ~/.local/share/PixInsight/src/scripts/
-chmod +x ~/.local/share/PixInsight/src/scripts/run_lacosmic.sh
-```
-
-**Then restart PixInsight.**
+Then **Resources > Updates > Check for Updates**, select LAcosmic, apply, and restart PixInsight.
 
 Find the script in: **Script → BB-Astro → LAcosmic**
+
+### Step 2: Set up Python
+
+Run the setup script once from a Terminal:
+
+```bash
+bash /Applications/PixInsight/src/scripts/BB-Astro/install_lacosmic.sh
+```
+
+On Linux the path is `/opt/PixInsight/src/scripts/BB-Astro/` by default.
+
+This creates `~/.bb-astro/lacosmic_venv` with `astroscrappy`, `astropy` and `numpy`. If you skip it, the script tells you so when you launch it rather than failing on your image.
+
+**A virtual environment is required, not a convenience.** Homebrew and most Linux distributions mark their interpreter as externally managed (PEP 668), so `pip3 install astroscrappy` into the system Python is refused outright.
+
+To use an interpreter of your choice instead:
+
+```bash
+BB_ASTRO_PYTHON=/path/to/python3 bash .../install_lacosmic.sh
+```
 
 ---
 
@@ -159,18 +159,25 @@ Tested on **NGC5335 HST F814W** (2683×2455 pixels, 32-bit float):
 
 ## Troubleshooting
 
-### "ModuleNotFoundError: No module named 'numpy'" (or astroscrappy / astropy)
+### "Python dependencies for L.A.Cosmic are missing"
 
-PixInsight may not use the same Python as your terminal. Install into the Python that the script detects first (Homebrew on Apple Silicon, system Python on Linux):
+The setup script has not been run, or its virtual environment was removed. Run it, then restart PixInsight:
+
 ```bash
-# Apple Silicon (M1/M2/M3)
-/opt/homebrew/bin/python3 -m pip install astroscrappy astropy numpy
-
-# Intel Mac / Linux
-/usr/local/bin/python3 -m pip install astroscrappy astropy numpy
-# or
-/usr/bin/python3 -m pip install astroscrappy astropy numpy
+bash /Applications/PixInsight/src/scripts/BB-Astro/install_lacosmic.sh
 ```
+
+To see which interpreter the script would use:
+
+```bash
+bash /Applications/PixInsight/src/scripts/BB-Astro/run_lacosmic.sh --probe
+```
+
+It prints the first candidate that actually has `astroscrappy`, `astropy` and `numpy`, searching `~/.bb-astro/lacosmic_venv`, then `~/.bb-astro/deepcr_venv`, then the system interpreters. Setting `PYTHON_EXECUTABLE` overrides the search entirely.
+
+### `pip` refuses with "externally-managed-environment"
+
+Expected. Your Python is protected by PEP 668. Use `install_lacosmic.sh`, which installs into its own virtual environment.
 
 ### "Stars are being removed"
 
@@ -180,8 +187,7 @@ PixInsight may not use the same Python as your terminal. Install into the Python
 
 ### "run_lacosmic.sh not found"
 
-- Verify all 3 files are in PixInsight's scripts directory
-- Make sure run_lacosmic.sh is executable: `chmod +x`
+The installation is incomplete. Reinstall LAcosmic from **Resources > Updates** in PixInsight; the package ships the wrapper with its executable bit set.
 
 ### More help
 
