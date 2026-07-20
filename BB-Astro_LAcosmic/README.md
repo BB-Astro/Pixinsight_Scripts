@@ -48,15 +48,17 @@ Find the script in: **Script → BB-Astro → LAcosmic**
 
 ### Step 2: Set up Python
 
-Run the setup script once from a Terminal:
+**Just launch the script.** It checks its environment before opening, and if it is missing it offers to build it: click **Set up now** and watch the progress in the PixInsight Console. No Terminal involved.
+
+It creates `~/.bb-astro/lacosmic_venv` with `astroscrappy`, `astropy` and `numpy`.
+
+If you would rather do it by hand:
 
 ```bash
 bash /Applications/PixInsight/src/scripts/BB-Astro/install_lacosmic.sh
 ```
 
-On Linux the path is `/opt/PixInsight/src/scripts/BB-Astro/` by default.
-
-This creates `~/.bb-astro/lacosmic_venv` with `astroscrappy`, `astropy` and `numpy`. If you skip it, the script tells you so when you launch it rather than failing on your image.
+On Linux the path is `/opt/PixInsight/src/scripts/BB-Astro/` by default. Add `--yes` to run it without prompting.
 
 **A virtual environment is required, not a convenience.** Homebrew and most Linux distributions mark their interpreter as externally managed (PEP 668), so `pip3 install astroscrappy` into the system Python is refused outright.
 
@@ -159,9 +161,9 @@ Tested on **NGC5335 HST F814W** (2683×2455 pixels, 32-bit float):
 
 ## Troubleshooting
 
-### "Python dependencies for L.A.Cosmic are missing"
+### "The Python environment for L.A.Cosmic is not set up yet"
 
-The setup script has not been run, or its virtual environment was removed. Run it, then restart PixInsight:
+Click **Set up now** in the dialog. If you dismissed it, relaunch the script, or run the setup by hand:
 
 ```bash
 bash /Applications/PixInsight/src/scripts/BB-Astro/install_lacosmic.sh

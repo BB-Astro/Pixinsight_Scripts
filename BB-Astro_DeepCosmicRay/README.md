@@ -2,7 +2,7 @@
 
 **Deep Learning Cosmic Ray Removal for PixInsight**
 
-[![Version](https://img.shields.io/badge/version-2.1.2-blue)](https://github.com/BB-Astro/Pixinsight_Scripts)
+[![Version](https://img.shields.io/badge/version-2.1.3-blue)](https://github.com/BB-Astro/Pixinsight_Scripts)
 [![License](https://img.shields.io/badge/license-CC_BY--NC--SA_4.0-orange)](LICENSE)
 [![PixInsight](https://img.shields.io/badge/PixInsight-Compatible-green)](https://pixinsight.com)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11-blue)](https://www.python.org)
@@ -82,15 +82,17 @@ Find the module in: **Script → BB-Astro → DeepCosmicRay**
 
 ### Step 2: Set up Python
 
-Run the setup script once from a Terminal:
+**Just launch the module.** It checks its environment before opening, and if it is missing it offers to build it: click **Set up now** and watch the progress in the PixInsight Console. You can abort from there. No Terminal involved.
+
+It creates `~/.bb-astro/deepcr_venv`, installs the packages, and verifies that both models the module uses (`ACS-WFC` and `WFC3-UVIS`) load.
+
+If you would rather do it by hand:
 
 ```bash
 bash /Applications/PixInsight/src/scripts/BB-Astro/install_deepcr.sh
 ```
 
-On Linux the path is `/opt/PixInsight/src/scripts/BB-Astro/` by default.
-
-It creates `~/.bb-astro/deepcr_venv`, installs the packages, and verifies that both models the module uses (`ACS-WFC` and `WFC3-UVIS`) load. If you skip this step, the module tells you so when you launch it rather than failing on your image.
+On Linux the path is `/opt/PixInsight/src/scripts/BB-Astro/` by default. Add `--yes` to run it without prompting.
 
 If no suitable interpreter is found:
 
@@ -255,9 +257,9 @@ Threshold: 0.2
 
 ## Troubleshooting
 
-### "Python dependencies for DeepCR are missing"
+### "The Python environment for DeepCR is not set up yet"
 
-The setup script has not been run, or its virtual environment was removed:
+Click **Set up now** in the dialog. If you dismissed it, relaunch the module, or run the setup by hand:
 
 ```bash
 bash /Applications/PixInsight/src/scripts/BB-Astro/install_deepcr.sh

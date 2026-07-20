@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // BB-Astro_LAcosmic.js - Professional Cosmic Ray Removal for PixInsight
 // ----------------------------------------------------------------------------
-// Version: 1.0.3
+// Version: 1.0.4
 // Author: Benoit Blanco (BB)
 //
 // Implements the L.A.Cosmic algorithm (van Dokkum 2001) for detecting and
@@ -82,7 +82,7 @@
 #include <pjsr/SampleType.jsh>
 
 #define TITLE "BB-Astro LACosmic"
-#define VERSION "1.0.3"
+#define VERSION "1.0.4"
 
 // Global settings object - V3 Optimized Parameters
 // Tested on NGC5335 HST data: +24.4% more CRs detected vs baseline
@@ -111,6 +111,7 @@ var BBLACosmic = {
 
    // System paths
    wrapperScript: File.extractDirectory(#__FILE__) + "/run_lacosmic.sh",
+   setupScript: File.extractDirectory(#__FILE__) + "/install_lacosmic.sh",
    outputDir: File.systemTempDirectory
 };
 
@@ -159,17 +160,156 @@ function checkDependencies() {
       return result;
    }
 
-   result.message = "Python dependencies for L.A.Cosmic are missing.\n\n" +
-      "Open a Terminal and run:\n\n" +
-      "  bash \"" + File.extractDirectory(#__FILE__) + "/install_lacosmic.sh\"\n\n" +
-      "It creates ~/.bb-astro/lacosmic_venv and installs astroscrappy, astropy\n" +
-      "and numpy.\n\n" +
-      "Note: a virtual environment is required, not optional. Homebrew and most\n" +
-      "Linux distributions mark their Python as externally managed (PEP 668),\n" +
-      "so \"pip3 install astroscrappy\" into the system interpreter is refused.\n\n" +
-      "Then restart PixInsight.";
+   result.message = "The Python environment for L.A.Cosmic is not set up yet.";
 
    return result;
+}
+
+/*
+ * Escape the few characters the PixInsight Console treats as markup, so that
+ * whatever pip prints is shown verbatim.
+ */
+function consoleEscape( text )
+{
+   return text.replace( /&/g, "&amp;" ).replace( /</g, "&lt;" );
+}
+
+/*
+ * Run install_lacosmic.sh and stream its output to the Console.
+ *
+ * The process is polled rather than waited on, so PixInsight stays responsive
+ * and the user can abort. Reading process.stdout clears it, so the loop
+ * accumulates the output without repeating it.
+ *
+ * Returns true if the script exited successfully.
+ */
+function runSetup()
+{
+   if ( !File.exists( BBLACosmic.setupScript ) )
+   {
+      Console.criticalln( "install_lacosmic.sh not found at: " + BBLACosmic.setupScript );
+      return false;
+   }
+
+   Console.show();
+   Console.writeln( "" );
+   Console.writeln( "<b>Setting up the L.A.Cosmic Python environment</b>" );
+   Console.writeln( "Creating ~/.bb-astro/lacosmic_venv with astroscrappy, astropy and numpy." );
+   Console.writeln( "" );
+   Console.flush();
+
+   var wasAbortEnabled = Console.abortEnabled;
+   Console.abortEnabled = true;
+
+   var ok = false;
+
+   try
+   {
+      // --yes because there is no terminal here: an interactive prompt would
+      // block the script forever.
+      var p = new ExternalProcess( "/bin/bash " + BBLACosmic.setupScript + " --yes" );
+
+      var startTime = Date.now();
+      var START_TIMEOUT_MS = 30 * 1000;
+      var RUN_TIMEOUT_MS = 30 * 60 * 1000;
+
+      while ( p.isStarting )
+      {
+         if ( Date.now() - startTime > START_TIMEOUT_MS )
+         {
+            p.terminate();
+            Console.criticalln( "ERROR: the setup script did not start." );
+            return false;
+         }
+         processEvents();
+         msleep( 100 );
+      }
+
+      while ( p.isRunning )
+      {
+         if ( Console.abortRequested )
+         {
+            p.terminate();
+            Console.warningln( "Setup aborted. The environment is incomplete;" );
+            Console.warningln( "run the setup again before using LAcosmic." );
+            return false;
+         }
+         if ( Date.now() - startTime > RUN_TIMEOUT_MS )
+         {
+            p.terminate();
+            Console.criticalln( "ERROR: setup timed out after 30 minutes." );
+            return false;
+         }
+
+         var chunk = p.stdout.utf8ToString();
+         if ( chunk.length > 0 )
+         {
+            Console.write( consoleEscape( chunk ) );
+            Console.flush();
+         }
+
+         processEvents();
+         msleep( 200 );
+      }
+
+      // Whatever the process wrote between the last poll and its exit.
+      var tail = p.stdout.utf8ToString();
+      if ( tail.length > 0 )
+         Console.write( consoleEscape( tail ) );
+
+      ok = p.exitCode == 0;
+      if ( !ok )
+         Console.criticalln( "Setup failed (exit code " + p.exitCode + "). " +
+                             "See the messages above." );
+   }
+   catch ( e )
+   {
+      Console.criticalln( "ERROR: could not run install_lacosmic.sh: " + e.message );
+      ok = false;
+   }
+   finally
+   {
+      Console.abortEnabled = wasAbortEnabled;
+      Console.flush();
+   }
+
+   return ok;
+}
+
+/*
+ * Offer to run the setup, or show the manual command.
+ * Returns true if the setup ran and reported success.
+ */
+function offerSetup()
+{
+   var answer = (new MessageBox(
+      "The Python environment for L.A.Cosmic is not set up yet.\n\n" +
+      "Set it up now? PixInsight will create ~/.bb-astro/lacosmic_venv and " +
+      "install astroscrappy, astropy and numpy.\n\n" +
+      "It takes under a minute. Progress is shown in the Console, and you can " +
+      "abort it there.\n\n" +
+      "Choose No to get the Terminal command instead.",
+      TITLE + " - Setup Required",
+      StdIcon_Question,
+      StdButton_Yes, StdButton_No
+   )).execute();
+
+   if ( answer == StdButton_Yes )
+      return runSetup();
+
+   (new MessageBox(
+      "Open a Terminal and run:\n\n" +
+      "  bash \"" + BBLACosmic.setupScript + "\"\n\n" +
+      "A virtual environment is required, not optional: Homebrew and most Linux " +
+      "distributions mark their Python as externally managed (PEP 668), so " +
+      "\"pip3 install astroscrappy\" into the system interpreter is refused.\n\n" +
+      "Then run LAcosmic again.",
+      TITLE + " - Manual Setup",
+      StdIcon_Information,
+      StdButton_Ok
+   )).execute();
+
+   return false;
 }
 
 // ----------------------------------------------------------------------------
@@ -940,14 +1080,25 @@ function main() {
    Console.writeln("Checking Python dependencies...");
    var deps = checkDependencies();
    if (!deps.ok) {
-      Console.criticalln("ERROR: " + deps.message.replace(/\n/g, " "));
-      new MessageBox(
-         deps.message,
-         TITLE + " - Setup Required",
-         StdIcon_Error,
-         StdButton_Ok
-      ).execute();
-      return;
+      Console.warningln(deps.message);
+
+      if (!offerSetup())
+         return;
+
+      // The setup reported success, so the wrapper must find it now.
+      deps = checkDependencies();
+      if (!deps.ok) {
+         Console.criticalln("ERROR: setup completed but no usable interpreter was found.");
+         new MessageBox(
+            "The setup finished but astroscrappy still cannot be reached.\n\n" +
+            "See the Console for details.",
+            TITLE + " - Setup Incomplete",
+            StdIcon_Error,
+            StdButton_Ok
+         ).execute();
+         return;
+      }
+      Console.noteln("Setup complete.");
    }
    Console.writeln("Python OK: " + deps.python);
    Console.writeln("");

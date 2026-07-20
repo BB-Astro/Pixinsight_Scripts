@@ -7,7 +7,7 @@ authors:
   - family-names: "Blanco"
     given-names: "Benoit"
     email: "contact@bb-astro.com"
-version: "2.1.2"
+version: "2.1.3"
 date-released: "2026-07-20"
 license: "CC-BY-NC-SA-4.0"
 repository-code: "https://github.com/BB-Astro/Pixinsight_Scripts"

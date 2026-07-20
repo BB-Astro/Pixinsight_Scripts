@@ -2,27 +2,55 @@
 # ======================================================================
 # BB-Astro DeepCosmicRay - Python environment setup
 # ======================================================================
-# Run this AFTER installing the script through the PixInsight repository
-# (Resources > Updates). The PixInsight updater only extracts files, it
-# never runs this script.
+# Usually you do not run this by hand: launch DeepCosmicRay in PixInsight and
+# click "Set up now" when it reports the environment is missing. It runs this
+# script with --yes and shows the output in the Console.
 #
 # Creates ~/.bb-astro/deepcr_venv, which is the interpreter that
 # run_deepcr.sh and BB_DeepCosmicRay.js look for first.
+#
+# Usage: install_deepcr.sh [-y|--yes]
 # ======================================================================
 
 set -o pipefail
+
+# --yes never prompts. Required when launched from PixInsight, where there is
+# no terminal to answer on and a read would hang the script forever.
+ASSUME_YES=0
+for arg in "$@"; do
+    case "$arg" in
+        -y|--yes) ASSUME_YES=1 ;;
+        -h|--help)
+            echo "Usage: install_deepcr.sh [-y|--yes]"
+            echo "  -y, --yes   Never prompt. An existing environment is kept"
+            echo "              and its packages are updated."
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $arg" >&2
+            echo "Usage: install_deepcr.sh [-y|--yes]" >&2
+            exit 1
+            ;;
+    esac
+done
+
+# Colours only when writing to a terminal. Piped into PixInsight's Console the
+# escape sequences would show up as literal garbage.
+if [ -t 1 ]; then
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    YELLOW='\033[1;33m'
+    BLUE='\033[0;34m'
+    NC='\033[0m'
+else
+    RED=''; GREEN=''; YELLOW=''; BLUE=''; NC=''
+fi
 
 echo ""
 echo "======================================================================"
 echo "  BB-Astro DeepCosmicRay - Python Environment Setup"
 echo "======================================================================"
 echo ""
-
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
 
 INSTALL_DIR="${HOME}/.bb-astro"
 VENV_DIR="${INSTALL_DIR}/deepcr_venv"
@@ -114,13 +142,17 @@ mkdir -p "$INSTALL_DIR"
 
 if [ -d "$VENV_DIR" ]; then
     echo -e "${YELLOW}!${NC} Virtual environment already exists at $VENV_DIR"
-    read -p "   Recreate it? [y/N] " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo "   Removing old venv..."
-        rm -rf "$VENV_DIR"
+    if [ "$ASSUME_YES" -eq 1 ]; then
+        echo "   Keeping it, packages will be updated."
     else
-        echo "   Keeping existing venv, will update packages..."
+        read -p "   Recreate it? [y/N] " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo "   Removing old venv..."
+            rm -rf "$VENV_DIR"
+        else
+            echo "   Keeping existing venv, will update packages..."
+        fi
     fi
 fi
 

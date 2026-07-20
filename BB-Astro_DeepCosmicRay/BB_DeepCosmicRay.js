@@ -52,14 +52,15 @@
    <br/>\
    <b>Technical Requirements:</b><br/>\
    &bull; Python 3.10 or 3.11 with deepcr, torch, xisf, matplotlib, astropy, numpy<br/>\
-   &bull; Run install_deepcr.sh once to build ~/.bb-astro/deepcr_venv (about 850 MB)<br/>\
+   &bull; On first launch the script offers to set this up for you: click "Set up now" and \
+   watch the Console. No Terminal needed. It builds ~/.bb-astro/deepcr_venv, about 850 MB.<br/>\
    &bull; Pretrained weights ship inside the deepcr package, nothing is downloaded<br/>\
    &bull; Works with FITS format (16-bit or 32-bit)<br/>\
    <br/>\
    <b>References:</b><br/>\
    &bull; Zhang, K., & Bloom, J. S. (2020). Identifying Cosmic Rays in Astronomical Images Using Deep Learning. ApJ, 889(1), 24.<br/>\
    &bull; DeepCR repository: github.com/profjsb/deepCR<br/>\
-   &bull; BB-Astro_DeepCosmicRay: github.com/bb-astro/deepcosmic<br/>\
+   &bull; BB-Astro_DeepCosmicRay: github.com/BB-Astro/Pixinsight_Scripts<br/>\
    <br/>\
    Copyright (C) 2025 BB-Astro
 
@@ -73,7 +74,7 @@
 #include <pjsr/SampleType.jsh>
 
 #define TITLE "BB Astro - DeepCosmicRay"
-#define VERSION "2.1.2"
+#define VERSION "2.1.3"
 
 // UI Validation Constants
 var UI_COLOR_VALID = 0xFFFFFFFF;    // White - valid input
@@ -95,6 +96,7 @@ var BBDeepCR = {
 
    // System paths
    wrapperScript: File.extractDirectory(#__FILE__) + "/run_deepcr.sh",
+   setupScript: File.extractDirectory(#__FILE__) + "/install_deepcr.sh",
    outputDir: File.systemTempDirectory
 };
 
@@ -150,17 +152,159 @@ function checkDependencies() {
       return result;
    }
 
-   result.message = "Python dependencies for DeepCR are missing.\n\n" +
-      "Open a Terminal and run:\n\n" +
-      "  bash \"" + File.extractDirectory(#__FILE__) + "/install_deepcr.sh\"\n\n" +
-      "It creates ~/.bb-astro/deepcr_venv and installs deepcr, torch, xisf,\n" +
-      "matplotlib, numpy and astropy (about 850 MB).\n\n" +
-      "Note: deepcr only builds on Python 3.10 or 3.11, and torch needs 3.10 or\n" +
-      "later, so a plain \"pip3 install deepcr\" on a current Python will fail.\n" +
-      "install_deepcr.sh picks a suitable interpreter for you.\n\n" +
-      "Then restart PixInsight.";
+   result.message = "The Python environment for DeepCR is not set up yet.";
 
    return result;
+}
+
+/*
+ * Escape the few characters the PixInsight Console treats as markup, so that
+ * whatever pip prints is shown verbatim.
+ */
+function consoleEscape( text )
+{
+   return text.replace( /&/g, "&amp;" ).replace( /</g, "&lt;" );
+}
+
+/*
+ * Run install_deepcr.sh and stream its output to the Console.
+ *
+ * The process is polled rather than waited on, so PixInsight stays responsive
+ * and the user can abort: this download is several hundred megabytes and can
+ * take minutes. Reading process.stdout clears it, so the loop accumulates the
+ * output without repeating it.
+ *
+ * Returns true if the script exited successfully.
+ */
+function runSetup()
+{
+   if ( !File.exists( BBDeepCR.setupScript ) )
+   {
+      Console.criticalln( "install_deepcr.sh not found at: " + BBDeepCR.setupScript );
+      return false;
+   }
+
+   Console.show();
+   Console.writeln( "" );
+   Console.writeln( "<b>Setting up the DeepCR Python environment</b>" );
+   Console.writeln( "Creating ~/.bb-astro/deepcr_venv. This downloads about 850 MB," );
+   Console.writeln( "mostly PyTorch, and can take several minutes." );
+   Console.writeln( "" );
+   Console.flush();
+
+   var wasAbortEnabled = Console.abortEnabled;
+   Console.abortEnabled = true;
+
+   var ok = false;
+   var p = null;
+
+   try
+   {
+      // --yes because there is no terminal here: an interactive prompt would
+      // block the script forever.
+      p = new ExternalProcess( "/bin/bash " + BBDeepCR.setupScript + " --yes" );
+
+      var startTime = Date.now();
+      var START_TIMEOUT_MS = 30 * 1000;
+      var RUN_TIMEOUT_MS = 60 * 60 * 1000;
+
+      while ( p.isStarting )
+      {
+         if ( Date.now() - startTime > START_TIMEOUT_MS )
+         {
+            p.terminate();
+            Console.criticalln( "ERROR: the setup script did not start." );
+            return false;
+         }
+         processEvents();
+         msleep( 100 );
+      }
+
+      while ( p.isRunning )
+      {
+         if ( Console.abortRequested )
+         {
+            p.terminate();
+            Console.warningln( "Setup aborted. The environment is incomplete;" );
+            Console.warningln( "run the setup again before using DeepCosmicRay." );
+            return false;
+         }
+         if ( Date.now() - startTime > RUN_TIMEOUT_MS )
+         {
+            p.terminate();
+            Console.criticalln( "ERROR: setup timed out after 60 minutes." );
+            return false;
+         }
+
+         var chunk = p.stdout.utf8ToString();
+         if ( chunk.length > 0 )
+         {
+            Console.write( consoleEscape( chunk ) );
+            Console.flush();
+         }
+
+         processEvents();
+         msleep( 200 );
+      }
+
+      // Whatever the process wrote between the last poll and its exit.
+      var tail = p.stdout.utf8ToString();
+      if ( tail.length > 0 )
+         Console.write( consoleEscape( tail ) );
+
+      ok = p.exitCode == 0;
+      if ( !ok )
+         Console.criticalln( "Setup failed (exit code " + p.exitCode + "). " +
+                             "See the messages above." );
+   }
+   catch ( e )
+   {
+      Console.criticalln( "ERROR: could not run install_deepcr.sh: " + e.message );
+      ok = false;
+   }
+   finally
+   {
+      Console.abortEnabled = wasAbortEnabled;
+      Console.flush();
+   }
+
+   return ok;
+}
+
+/*
+ * Offer to run the setup, or show the manual command.
+ * Returns true if the setup ran and reported success.
+ */
+function offerSetup()
+{
+   var answer = (new MessageBox(
+      "The Python environment for DeepCR is not set up yet.\n\n" +
+      "Set it up now? PixInsight will create ~/.bb-astro/deepcr_venv and " +
+      "install deepcr, torch, xisf, matplotlib, numpy and astropy.\n\n" +
+      "This downloads about 850 MB and takes a few minutes. Progress is shown " +
+      "in the Console, and you can abort it there.\n\n" +
+      "Choose No to get the Terminal command instead.",
+      TITLE + " - Setup Required",
+      StdIcon_Question,
+      StdButton_Yes, StdButton_No
+   )).execute();
+
+   if ( answer == StdButton_Yes )
+      return runSetup();
+
+   (new MessageBox(
+      "Open a Terminal and run:\n\n" +
+      "  bash \"" + BBDeepCR.setupScript + "\"\n\n" +
+      "Note: deepcr only builds on Python 3.10 or 3.11, and torch needs 3.10 " +
+      "or later, so a plain \"pip3 install deepcr\" on a current Python fails. " +
+      "The setup script picks a suitable interpreter for you.\n\n" +
+      "Then run DeepCosmicRay again.",
+      TITLE + " - Manual Setup",
+      StdIcon_Information,
+      StdButton_Ok
+   )).execute();
+
+   return false;
 }
 
 // ----------------------------------------------------------------------------
@@ -818,14 +962,25 @@ function main() {
    Console.writeln("Checking Python dependencies...");
    var deps = checkDependencies();
    if (!deps.ok) {
-      Console.criticalln("ERROR: " + deps.message.replace(/\n/g, " "));
-      (new MessageBox(
-         deps.message,
-         TITLE + " - Setup Required",
-         StdIcon_Error,
-         StdButton_Ok
-      )).execute();
-      return;
+      Console.warningln(deps.message);
+
+      if (!offerSetup())
+         return;
+
+      // The setup reported success, so the wrapper must find it now.
+      deps = checkDependencies();
+      if (!deps.ok) {
+         Console.criticalln("ERROR: setup completed but no usable interpreter was found.");
+         (new MessageBox(
+            "The setup finished but DeepCR still cannot be reached.\n\n" +
+            "See the Console for details.",
+            TITLE + " - Setup Incomplete",
+            StdIcon_Error,
+            StdButton_Ok
+         )).execute();
+         return;
+      }
+      Console.noteln("Setup complete.");
    }
    Console.writeln("Python OK: " + deps.python);
    Console.hide();
