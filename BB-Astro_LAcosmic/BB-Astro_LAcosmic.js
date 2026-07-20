@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // BB-Astro_LAcosmic.js - Professional Cosmic Ray Removal for PixInsight
 // ----------------------------------------------------------------------------
-// Version: 1.0.1
+// Version: 1.0.2
 // Author: Benoit Blanco (BB)
 //
 // Implements the L.A.Cosmic algorithm (van Dokkum 2001) for detecting and
@@ -82,7 +82,7 @@
 #include <pjsr/SampleType.jsh>
 
 #define TITLE "BB-Astro LACosmic"
-#define VERSION "1.0.1"
+#define VERSION "1.0.2"
 
 // Global settings object - V3 Optimized Parameters
 // Tested on NGC5335 HST data: +24.4% more CRs detected vs baseline
@@ -113,6 +113,64 @@ var BBLACosmic = {
    wrapperScript: File.extractDirectory(#__FILE__) + "/run_lacosmic.sh",
    outputDir: File.systemTempDirectory
 };
+
+// ----------------------------------------------------------------------------
+// Dependency Checking
+// ----------------------------------------------------------------------------
+
+/*
+ * Check that a Python interpreter with astroscrappy, astropy and numpy is
+ * reachable.
+ *
+ * The search is delegated to run_lacosmic.sh --probe, which is the same code
+ * path the actual run takes. Duplicating the interpreter search here would
+ * let the check and the run disagree, which is how a "Python OK" message can
+ * end up followed by an import error mid-processing.
+ *
+ * Returns: { ok: bool, python: string|null, message: string }
+ */
+function checkDependencies() {
+   var result = {
+      ok: false,
+      python: null,
+      message: ""
+   };
+
+   if (!File.exists(BBLACosmic.wrapperScript)) {
+      result.message = "run_lacosmic.sh not found at:\n" + BBLACosmic.wrapperScript +
+         "\n\nThe installation looks incomplete. Reinstall LAcosmic from\n" +
+         "Resources > Updates in PixInsight.";
+      return result;
+   }
+
+   try {
+      var p = new ExternalProcess("/bin/bash " + BBLACosmic.wrapperScript + " --probe");
+      p.waitForFinished(20000);
+
+      if (p.exitCode == 0) {
+         result.python = p.stdout.toString().trim();
+         if (result.python.length > 0) {
+            result.ok = true;
+            return result;
+         }
+      }
+   } catch (e) {
+      result.message = "Could not run run_lacosmic.sh:\n" + e.message;
+      return result;
+   }
+
+   result.message = "Python dependencies for L.A.Cosmic are missing.\n\n" +
+      "Open a Terminal and run:\n\n" +
+      "  bash \"" + File.extractDirectory(#__FILE__) + "/install_lacosmic.sh\"\n\n" +
+      "It creates ~/.bb-astro/lacosmic_venv and installs astroscrappy, astropy\n" +
+      "and numpy.\n\n" +
+      "Note: a virtual environment is required, not optional. Homebrew and most\n" +
+      "Linux distributions mark their Python as externally managed (PEP 668),\n" +
+      "so \"pip3 install astroscrappy\" into the system interpreter is refused.\n\n" +
+      "Then restart PixInsight.";
+
+   return result;
+}
 
 // ----------------------------------------------------------------------------
 // Parameters Management for Process Icons
@@ -875,6 +933,24 @@ function main() {
       ).execute();
       return;
    }
+
+   // Check Python dependencies before opening the dialog, so a missing
+   // environment is reported once with instructions instead of failing later
+   // on a real image.
+   Console.writeln("Checking Python dependencies...");
+   var deps = checkDependencies();
+   if (!deps.ok) {
+      Console.criticalln("ERROR: " + deps.message.replace(/\n/g, " "));
+      new MessageBox(
+         deps.message,
+         TITLE + " - Setup Required",
+         StdIcon_Error,
+         StdButton_Ok
+      ).execute();
+      return;
+   }
+   Console.writeln("Python OK: " + deps.python);
+   Console.writeln("");
 
    // Show dialog
    var dialog = new BBLACosmicDialog();

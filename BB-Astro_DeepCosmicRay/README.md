@@ -77,8 +77,8 @@ brew install python3
 
 4. **Run installer**:
    ```bash
-   chmod +x install.sh
-   ./install.sh
+   chmod +x install_deepcr.sh
+   ./install_deepcr.sh
    ```
 
    This will:
@@ -258,7 +258,7 @@ Run manually using the same Python the script uses (Homebrew on Apple Silicon):
 
 Or re-run the installer which creates a dedicated virtualenv:
 ```bash
-./install.sh
+./install_deepcr.sh
 ```
 
 ### "Wrapper script not found"

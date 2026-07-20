@@ -51,8 +51,9 @@
    Typical detection rate: 0.4-0.6% of pixels flagged as cosmic rays<br/>\
    <br/>\
    <b>Technical Requirements:</b><br/>\
-   &bull; Python 3.7+ with DeepCR, astropy, numpy, pytorch<br/>\
-   &bull; First run downloads pretrained models (~100MB)<br/>\
+   &bull; Python 3.10 or 3.11 with deepcr, torch, xisf, matplotlib, astropy, numpy<br/>\
+   &bull; Run install_deepcr.sh once to build ~/.bb-astro/deepcr_venv (about 850 MB)<br/>\
+   &bull; Pretrained weights ship inside the deepcr package, nothing is downloaded<br/>\
    &bull; Works with FITS format (16-bit or 32-bit)<br/>\
    <br/>\
    <b>References:</b><br/>\
@@ -72,7 +73,7 @@
 #include <pjsr/SampleType.jsh>
 
 #define TITLE "BB Astro - DeepCosmicRay"
-#define VERSION "2.1.1"
+#define VERSION "2.1.2"
 
 // UI Validation Constants
 var UI_COLOR_VALID = 0xFFFFFFFF;    // White - valid input
@@ -104,6 +105,63 @@ var PRESETS = {
    "conservative": { model: "WFC3-UVIS", threshold: 0.2 },
    "acs_default": { model: "ACS-WFC", threshold: 0.5 }
 };
+
+// ----------------------------------------------------------------------------
+// Dependency Checking
+// ----------------------------------------------------------------------------
+
+/*
+ * Check that a Python interpreter with deepCR, torch and xisf is reachable.
+ *
+ * The search is delegated to run_deepcr.sh --probe, which is the same code
+ * path the actual run takes. Duplicating the interpreter search here would
+ * let the check and the run disagree, which is how a "Python OK" message can
+ * end up followed by an import error mid-processing.
+ *
+ * Returns: { ok: bool, python: string|null, message: string }
+ */
+function checkDependencies() {
+   var result = {
+      ok: false,
+      python: null,
+      message: ""
+   };
+
+   if (!File.exists(BBDeepCR.wrapperScript)) {
+      result.message = "run_deepcr.sh not found at:\n" + BBDeepCR.wrapperScript +
+         "\n\nThe installation looks incomplete. Reinstall DeepCosmicRay from\n" +
+         "Resources > Updates in PixInsight.";
+      return result;
+   }
+
+   try {
+      var p = new ExternalProcess("/bin/bash " + BBDeepCR.wrapperScript + " --probe");
+      p.waitForFinished(20000);
+
+      if (p.exitCode == 0) {
+         result.python = p.stdout.toString().trim();
+         if (result.python.length > 0) {
+            result.ok = true;
+            return result;
+         }
+      }
+   } catch (e) {
+      result.message = "Could not run run_deepcr.sh:\n" + e.message;
+      return result;
+   }
+
+   result.message = "Python dependencies for DeepCR are missing.\n\n" +
+      "Open a Terminal and run:\n\n" +
+      "  bash \"" + File.extractDirectory(#__FILE__) + "/install_deepcr.sh\"\n\n" +
+      "It creates ~/.bb-astro/deepcr_venv and installs deepcr, torch, xisf,\n" +
+      "matplotlib, numpy and astropy (about 850 MB).\n\n" +
+      "Note: deepcr only builds on Python 3.10 or 3.11, and torch needs 3.10 or\n" +
+      "later, so a plain \"pip3 install deepcr\" on a current Python will fail.\n" +
+      "install_deepcr.sh picks a suitable interpreter for you.\n\n" +
+      "Then restart PixInsight.";
+
+   return result;
+}
 
 // ----------------------------------------------------------------------------
 // Process Icon Support - Parameters Export/Import
@@ -752,6 +810,25 @@ function main() {
       )).execute();
       return;
    }
+
+   // Check Python dependencies before opening the dialog, so a missing
+   // environment is reported once with instructions instead of failing later
+   // on a real image.
+   Console.show();
+   Console.writeln("Checking Python dependencies...");
+   var deps = checkDependencies();
+   if (!deps.ok) {
+      Console.criticalln("ERROR: " + deps.message.replace(/\n/g, " "));
+      (new MessageBox(
+         deps.message,
+         TITLE + " - Setup Required",
+         StdIcon_Error,
+         StdButton_Ok
+      )).execute();
+      return;
+   }
+   Console.writeln("Python OK: " + deps.python);
+   Console.hide();
 
    var dialog = new BBDeepCRDialog();
    dialog.execute();

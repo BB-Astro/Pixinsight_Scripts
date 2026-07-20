@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+
+# Environments created by install_lacosmic.sh / install_deepcr.sh live in
+# ~/.bb-astro, but keep these out in case someone builds one in place.
+*_venv/
+
+.DS_Store
+*.swp
+*~

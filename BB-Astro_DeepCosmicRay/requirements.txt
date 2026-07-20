@@ -1,7 +1,21 @@
+# Python 3.10 or 3.11 only.
+#   >= 3.10  torch declares requires_python ">=3.10"
+#   <= 3.11  deepcr ships an sdist only and its setup.py uses ast.Str.s,
+#            removed in Python 3.12, so the build fails with
+#            "AttributeError: 'Constant' object has no attribute 's'"
+# install.sh enforces this window when creating ~/.bb-astro/deepcr_venv.
+
 deepCR>=0.3.1
+torch>=2.0
+torchvision>=0.15
 astropy>=5.0
 numpy>=1.20
-torch>=1.9
-scikit-image>=0.18
 xisf>=0.9.5
-# matplotlib is not used by deepcr_cli.py but may be required by deepCR internals
+
+# deepcr declares no dependencies at all on PyPI, yet deepCR/training.py
+# imports matplotlib at package import time. Without it, "from deepCR import
+# deepCR" raises ModuleNotFoundError. Not optional.
+matplotlib>=3.5
+
+# Pulled in by torchvision, listed for clarity.
+scikit-image>=0.18
