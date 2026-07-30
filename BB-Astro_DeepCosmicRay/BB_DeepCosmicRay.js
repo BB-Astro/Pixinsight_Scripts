@@ -67,7 +67,7 @@
    Copyright (C) 2025 BB-Astro
 
 #define TITLE "BB Astro - DeepCosmicRay"
-#define VERSION "2.2.0"
+#define VERSION "2.2.1"
 
 // UI Validation Constants
 var UI_COLOR_VALID = 0xFFFFFFFF;    // White - valid input
@@ -209,7 +209,7 @@ function runSetup()
             Console.criticalln( "ERROR: the setup script did not start." );
             return false;
          }
-         processEvents();
+         CoreApplication.processEvents();
          msleep( 100 );
       }
 
@@ -236,7 +236,7 @@ function runSetup()
             Console.flush();
          }
 
-         processEvents();
+         CoreApplication.processEvents();
          msleep( 200 );
       }
 
@@ -467,7 +467,7 @@ function executeDeepCR() {
 
       // Wait for process
       while (!process.waitForFinished(100)) {
-         processEvents();
+         CoreApplication.processEvents();
 
          if ((Date.now() - startTime) > TIMEOUT_MS) {
             process.kill();

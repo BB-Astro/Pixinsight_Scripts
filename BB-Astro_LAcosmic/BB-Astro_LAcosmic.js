@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // BB-Astro_LAcosmic.js - Professional Cosmic Ray Removal for PixInsight
 // ----------------------------------------------------------------------------
-// Version: 1.1.0
+// Version: 1.1.1
 // Author: Benoit Blanco (BB)
 //
 // Implements the L.A.Cosmic algorithm (van Dokkum 2001) for detecting and
@@ -75,7 +75,7 @@
    Copyright (C) 2024-2025 Benoit Blanco
 
 #define TITLE "BB-Astro LACosmic"
-#define VERSION "1.1.0"
+#define VERSION "1.1.1"
 
 // Global settings object - V3 Optimized Parameters
 // Tested on NGC5335 HST data: +24.4% more CRs detected vs baseline
@@ -214,7 +214,7 @@ function runSetup()
             Console.criticalln( "ERROR: the setup script did not start." );
             return false;
          }
-         processEvents();
+         CoreApplication.processEvents();
          msleep( 100 );
       }
 
@@ -241,7 +241,7 @@ function runSetup()
             Console.flush();
          }
 
-         processEvents();
+         CoreApplication.processEvents();
          msleep( 200 );
       }
 
@@ -476,7 +476,7 @@ function executeCosmicRayRemoval() {
       var TIMEOUT_MS = 600000; // 10 minutes
 
       while (!process.waitForFinished(100)) {
-         processEvents();
+         CoreApplication.processEvents();
          if ((Date.now() - startTime) > TIMEOUT_MS) {
             process.kill();
             Console.criticalln("\nWARNING BB: le traitement a pris trop de temps (timeout apres 10 minutes)!");

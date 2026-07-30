@@ -2,7 +2,7 @@
 
 **Deep Learning Cosmic Ray Removal for PixInsight**
 
-[![Version](https://img.shields.io/badge/version-2.2.0-blue)](https://github.com/BB-Astro/Pixinsight_Scripts)
+[![Version](https://img.shields.io/badge/version-2.2.1-blue)](https://github.com/BB-Astro/Pixinsight_Scripts)
 [![License](https://img.shields.io/badge/license-CC_BY--NC--SA_4.0-orange)](LICENSE)
 [![PixInsight](https://img.shields.io/badge/PixInsight-Compatible-green)](https://pixinsight.com)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11-blue)](https://www.python.org)
@@ -493,7 +493,7 @@ Full technical details in source code comments.
 ---
 
 **Author**: Benoit Blanco (BB-Astro)
-**Version**: 2.2.0
+**Version**: 2.2.1
 **Release**: July 2026
 **Website**: [www.bb-astro.com](https://www.bb-astro.com)
 **License**: CC BY-NC-SA 4.0 (non-commercial)
