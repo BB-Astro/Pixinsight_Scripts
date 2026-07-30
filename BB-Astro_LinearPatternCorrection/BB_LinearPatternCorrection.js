@@ -16,16 +16,17 @@
 #feature-id    BB_LinearPatternCorrection : BB-Astro > LinearPatternCorrection
 #feature-icon  ./Favicon_LinearPatternCorrection.svg
 
-#feature-info  "<b>BB Linear Pattern Correction v1.0.0</b><br><br>" +
+#feature-info  "<b>BB Linear Pattern Correction v1.1.0</b><br><br>" +
                "Detect defective rows or columns, inspect a live model, and " +
                "subtract the selected pattern without managing a defect-list file.<br><br>" +
                "Copyright &copy; 2026 Benoit Blanco (BB-Astro)."
 #endif
 
 #define TITLE   "BB Linear Pattern Correction"
-#define VERSION "1.0.0"
+#define VERSION "1.1.0"
 
 #include <pjsr/FrameStyle.jsh>
+#include <pjsr/ColorSpace.jsh>
 #include <pjsr/LinearDefectDetection.jsh>
 #include <pjsr/LinearPatternSubtraction.jsh>
 #include <pjsr/SampleType.jsh>
@@ -37,23 +38,26 @@
 var BBLPC_PREVIEW_DETECTION = 0;
 var BBLPC_PREVIEW_MODEL = 1;
 var BBLPC_PREVIEW_DEBOUNCE_SECONDS = 1.0;
+var BBLPC_PROTECTION_HALF_WIDTH = 8;
+var BBLPC_PROTECTION_MIN_FRACTION = 0.20;
 
 function BBLPCData()
 {
    this.targetView = null;
 
    this.detectColumns = true;
-   this.layersToRemove = 9;
+   this.layersToRemove = 8;
    this.detectionRejectionLimit = 3;
-   this.detectionThreshold = 5;
-   this.partialLineDetectionThreshold = 5;
+   this.detectionThreshold = 4;
+   this.partialLineDetectionThreshold = 4;
    this.imageShift = 50;
+   this.protectBrightStructures = true;
 
    this.correctEntireImage = false;
    this.subtractionLayersToRemove = 9;
    this.subtractionRejectionLimit = 3;
    this.globalRejection = true;
-   this.globalRejectionLimit = 5;
+   this.globalRejectionLimit = 3;
    this.backgroundPreviewId = "";
 
    this.autoUpdate = true;
@@ -61,6 +65,8 @@ function BBLPCData()
    this.detection = null;
    this.detectionBitmap = null;
    this.modelBitmap = null;
+   this.rawDetectionCount = 0;
+   this.protectedDetectionCount = 0;
    this.lastError = "";
 }
 
@@ -212,14 +218,49 @@ function bblpcRemoveFile( path )
 
 function bblpcAutomaticBackgroundRect( image )
 {
-   var width = Math.min( 512, image.width );
-   var height = Math.min( 512, image.height );
-   return new Rect(
-      Math.floor( ( image.width - width ) / 2 ),
-      Math.floor( ( image.height - height ) / 2 ),
-      Math.floor( ( image.width + width ) / 2 ),
-      Math.floor( ( image.height + height ) / 2 )
+   var width = Math.min(
+      image.width,
+      512,
+      Math.max( 64, Math.floor( image.width / 3 ) )
    );
+   var height = Math.min(
+      image.height,
+      512,
+      Math.max( 64, Math.floor( image.height / 3 ) )
+   );
+   var xMargin = Math.floor( 0.05 * ( image.width - width ) );
+   var yMargin = Math.floor( 0.05 * ( image.height - height ) );
+   var xPositions = [
+      xMargin,
+      Math.floor( ( image.width - width ) / 2 ),
+      image.width - width - xMargin
+   ];
+   var yPositions = [
+      yMargin,
+      Math.floor( ( image.height - height ) / 2 ),
+      image.height - height - yMargin
+   ];
+
+   var bestRect = null;
+   var bestMedian = Number.POSITIVE_INFINITY;
+   for ( var yi = 0; yi < yPositions.length; ++yi )
+      for ( var xi = 0; xi < xPositions.length; ++xi )
+      {
+         var rect = new Rect(
+            xPositions[xi],
+            yPositions[yi],
+            xPositions[xi] + width,
+            yPositions[yi] + height
+         );
+         var median = image.median( rect );
+         if ( median < bestMedian )
+         {
+            bestMedian = median;
+            bestRect = rect;
+         }
+      }
+
+   return bestRect;
 }
 
 function bblpcBackgroundRect( data )
@@ -231,6 +272,151 @@ function bblpcBackgroundRect( data )
          return data.targetView.window.previewRect( data.backgroundPreviewId );
    }
    return bblpcAutomaticBackgroundRect( data.targetView.image );
+}
+
+function bblpcBrightSampleFraction( image, rectangle, threshold )
+{
+   var samplesPerChannel = rectangle.width * rectangle.height;
+   var brightSamples = 0;
+   var finiteSamples = 0;
+
+   for ( var channel = 0; channel < image.numberOfChannels; ++channel )
+   {
+      var samples = new Float32Array( samplesPerChannel );
+      image.getSamples( samples, rectangle, channel );
+      for ( var i = 0; i < samples.length; ++i )
+         if ( isFinite( samples[i] ) )
+         {
+            ++finiteSamples;
+            if ( samples[i] > threshold )
+               ++brightSamples;
+         }
+   }
+
+   return finiteSamples == 0 ? 0 : brightSamples / finiteSamples;
+}
+
+function bblpcFilterBrightStructureDetections( data, rawDetection )
+{
+   if ( !data.protectBrightStructures )
+      return {
+         detection: rawDetection,
+         rejected: 0
+      };
+
+   var image = data.targetView.image;
+   var backgroundRect = bblpcBackgroundRect( data );
+   var backgroundMedian = image.median( backgroundRect );
+   var backgroundMAD = image.MAD( backgroundMedian, backgroundRect );
+   var backgroundSigma = Math.max( 1.0e-12, 1.4826 * backgroundMAD );
+   var threshold =
+      backgroundMedian +
+      data.detectionRejectionLimit * backgroundSigma;
+   var parallelMaximum =
+      ( data.detectColumns ? image.height : image.width ) - 1;
+   var perpendicularMaximum =
+      ( data.detectColumns ? image.width : image.height ) - 1;
+
+   var filtered = {
+      columnOrRow: [],
+      startPixel: [],
+      endPixel: []
+   };
+   var rejected = 0;
+
+   for ( var i = 0; i < rawDetection.columnOrRow.length; ++i )
+   {
+      var line = rawDetection.columnOrRow[i];
+      var start = Math.max( 0, rawDetection.startPixel[i] );
+      var end = Math.min( parallelMaximum, rawDetection.endPixel[i] );
+      var isEntireLine = start == 0 && end == parallelMaximum;
+      var reject = false;
+
+      if ( !isEntireLine )
+      {
+         var perpendicularStart = Math.max(
+            0,
+            line - BBLPC_PROTECTION_HALF_WIDTH
+         );
+         var perpendicularEnd = Math.min(
+            perpendicularMaximum + 1,
+            line + BBLPC_PROTECTION_HALF_WIDTH + 1
+         );
+         var rect = data.detectColumns ?
+            new Rect(
+               perpendicularStart,
+               start,
+               perpendicularEnd,
+               end + 1
+            ) :
+            new Rect(
+               start,
+               perpendicularStart,
+               end + 1,
+               perpendicularEnd
+            );
+         reject =
+            bblpcBrightSampleFraction( image, rect, threshold ) >=
+            BBLPC_PROTECTION_MIN_FRACTION;
+      }
+
+      if ( reject )
+         ++rejected;
+      else
+      {
+         filtered.columnOrRow.push( line );
+         filtered.startPixel.push( start );
+         filtered.endPixel.push( end );
+      }
+   }
+
+   return {
+      detection: filtered,
+      rejected: rejected
+   };
+}
+
+function bblpcSelectedDefectBitmap(
+   width,
+   height,
+   detection,
+   detectColumns
+)
+{
+   var mask = new Image(
+      width,
+      height,
+      1,
+      ColorSpace_Gray,
+      32,
+      SampleType_Real
+   );
+   mask.fill( 0 );
+
+   for ( var i = 0; i < detection.columnOrRow.length; ++i )
+   {
+      var line = detection.columnOrRow[i];
+      var start = detection.startPixel[i];
+      var end = detection.endPixel[i];
+      for ( var offset = -1; offset <= 1; ++offset )
+      {
+         var displayLine = line + offset;
+         if (
+            displayLine < 0 ||
+            displayLine >= ( detectColumns ? width : height )
+         )
+            continue;
+         for ( var position = start; position <= end; ++position )
+            if ( detectColumns )
+               mask.setSample( 1, displayLine, position );
+            else
+               mask.setSample( 1, position, displayLine );
+      }
+   }
+
+   var bitmap = bblpcDisplayBitmap( mask );
+   mask.free();
+   return bitmap;
 }
 
 /*
@@ -582,6 +768,28 @@ constructor( data )
       }
    );
 
+   this.brightProtectionCheck = new CheckBox( this );
+   this.brightProtectionCheck.text =
+      "Protect bright extended structures";
+   this.brightProtectionCheck.checked = data.protectBrightStructures;
+   this.brightProtectionCheck.toolTip =
+      "<p>Reject partial-line candidates whose surrounding band is dominated " +
+      "by bright extended signal. This prevents galaxy cores and broad arms " +
+      "from being interpreted as line defects. Complete defective lines are " +
+      "never rejected by this protection.</p>";
+   this.brightProtectionCheck.onCheck = function( checked )
+   {
+      dialog.data.protectBrightStructures = checked;
+      dialog.invalidatePreview();
+   };
+
+   this.brightProtectionSizer = new HorizontalSizer;
+   this.brightProtectionSizer.addUnscaledSpacing(
+      labelWidth + this.logicalPixelsToPhysical( 6 )
+   );
+   this.brightProtectionSizer.add( this.brightProtectionCheck );
+   this.brightProtectionSizer.addStretch();
+
    this.detectionGroup = new GroupBox( this );
    this.detectionGroup.title = "1. Defect detection";
    this.detectionGroup.sizer = new VerticalSizer;
@@ -593,6 +801,7 @@ constructor( data )
    this.detectionGroup.sizer.add( this.wholeThreshold.sizer );
    this.detectionGroup.sizer.add( this.partialThreshold.sizer );
    this.detectionGroup.sizer.add( this.imageShiftControl.sizer );
+   this.detectionGroup.sizer.add( this.brightProtectionSizer );
 
    this.correctEntireCheck = new CheckBox( this );
    this.correctEntireCheck.text = "Correct the entire row/column pattern";
@@ -679,11 +888,14 @@ constructor( data )
    this.backgroundCombo.setScaledMinWidth( 360 );
    this.backgroundCombo.toolTip =
       "<p>Use a preview containing representative background. If no preview " +
-      "is selected, a central region up to 512 by 512 pixels is used.</p>";
+      "is selected, the lowest-median region in a 3 by 3 image grid is used. " +
+      "This region also calibrates bright-structure protection.</p>";
    this.backgroundCombo.onItemSelected = function( itemIndex )
    {
       dialog.data.backgroundPreviewId =
          itemIndex <= 0 ? "" : dialog.backgroundPreviewIds[itemIndex - 1];
+      if ( dialog.data.protectBrightStructures )
+         dialog.invalidatePreview();
    };
 
    this.backgroundSizer = new HorizontalSizer;
@@ -717,12 +929,13 @@ constructor( data )
    };
 
    this.previewModeCombo = new ComboBox( this );
-   this.previewModeCombo.addItem( "Detection map" );
+   this.previewModeCombo.addItem( "Selected defect mask" );
    this.previewModeCombo.addItem( "Line model" );
    this.previewModeCombo.currentItem = data.previewMode;
    this.previewModeCombo.toolTip =
-      "<p>The detection map emphasizes selected defects. The line model shows " +
-      "the robust per-line signal used by the detector.</p>";
+      "<p>The selected defect mask shows exactly which complete or partial " +
+      "lines will be sent to subtraction after bright-structure protection. " +
+      "The line model shows the robust per-line signal used by the detector.</p>";
    this.previewModeCombo.onItemSelected = function( itemIndex )
    {
       dialog.data.previewMode = itemIndex;
@@ -757,9 +970,10 @@ constructor( data )
    this.previewNote.wordWrapping = true;
    this.previewNote.useRichText = true;
    this.previewNote.text =
-      "<p><i>The preview is display-stretched only. The exact subtraction " +
-      "pattern is calculated once, at full precision, when Apply correction " +
-      "is clicked.</i></p>";
+      "<p><i>The mask lines are widened for display only. The line model is " +
+      "display-stretched only. Exact one-pixel coordinates and the full " +
+      "precision subtraction pattern are used when Apply correction is " +
+      "clicked.</i></p>";
 
    this.previewGroup = new GroupBox( this );
    this.previewGroup.title = "Live detection model";
@@ -847,6 +1061,8 @@ constructor( data )
    {
       this.previewDirty = true;
       this.data.detection = null;
+      this.data.rawDetectionCount = 0;
+      this.data.protectedDetectionCount = 0;
       this.statusLabel.text = this.data.autoUpdate ?
          "Parameters changed. Model update pending..." :
          "Parameters changed. Click Update model.";
@@ -866,7 +1082,7 @@ constructor( data )
    this.populateBackgroundPreviews = function()
    {
       this.backgroundCombo.clear();
-      this.backgroundCombo.addItem( "Automatic central region" );
+      this.backgroundCombo.addItem( "Automatic low-signal region" );
       this.backgroundPreviewIds = [];
 
       var previews = this.data.targetView.window.previews;
@@ -930,13 +1146,25 @@ constructor( data )
          if ( detectionWindow == null || modelWindow == null )
             throw new Error( "PixInsight did not generate the expected model windows." );
 
-         this.data.detection = {
+         var rawDetection = {
             columnOrRow: engine.detectedColumnOrRow.slice(),
             startPixel: engine.detectedStartPixel.slice(),
             endPixel: engine.detectedEndPixel.slice()
          };
-         this.data.detectionBitmap =
-            bblpcDisplayBitmap( detectionWindow.mainView.image );
+         var protectionResult =
+            bblpcFilterBrightStructureDetections(
+               this.data,
+               rawDetection
+            );
+         this.data.detection = protectionResult.detection;
+         this.data.rawDetectionCount = rawDetection.columnOrRow.length;
+         this.data.protectedDetectionCount = protectionResult.rejected;
+         this.data.detectionBitmap = bblpcSelectedDefectBitmap(
+            detectionWindow.mainView.image.width,
+            detectionWindow.mainView.image.height,
+            this.data.detection,
+            this.data.detectColumns
+         );
          this.data.modelBitmap =
             bblpcDisplayBitmap( modelWindow.mainView.image );
          this.showCurrentBitmap();
@@ -944,13 +1172,26 @@ constructor( data )
          var direction = this.data.detectColumns ? "columns" : "rows";
          this.statusLabel.text =
             this.data.detection.columnOrRow.length + " defective " +
-            direction + " detected. Processing time: " + timer.text + ".";
+            direction + " selected" +
+            (
+               this.data.protectedDetectionCount > 0 ?
+               ", " + this.data.protectedDetectionCount +
+               " bright-structure candidate" +
+               (
+                  this.data.protectedDetectionCount == 1 ? "" : "s"
+               ) +
+               " protected" :
+               ""
+            ) +
+            ". Processing time: " + timer.text + ".";
          return true;
       }
       catch ( error )
       {
          this.previewDirty = true;
          this.data.detection = null;
+         this.data.rawDetectionCount = 0;
+         this.data.protectedDetectionCount = 0;
          this.data.lastError = error.toString();
          this.statusLabel.text = "Model calculation failed: " + error;
 #ifndef BBLPC_SUPPRESS_MESSAGES

@@ -20,8 +20,9 @@ subtraction engine requires it, then it is removed automatically.
 
 - One interface for detection and subtraction
 - Live, debounced model recalculation
-- Detection-map and line-model views
+- Selected-defect mask and line-model views
 - Automatic transfer of complete and partial defect lines
+- Protection against false partial defects on bright extended structures
 - Detected-defects-only or whole-pattern correction
 - Selection of an existing PixInsight preview as the background reference
 - Pure PJSR, with no Python dependency
@@ -49,7 +50,7 @@ The script is available under:
 2. Optionally create a preview over a representative background area.
 3. Launch **Script > BB-Astro > LinearPatternCorrection**.
 4. Choose columns or rows and adjust the detection parameters.
-5. Inspect the detection map or line model.
+5. Inspect the selected-defect mask or line model.
 6. Choose whether to correct detected defects only or the full pattern.
 7. Select the background preview if one was created.
 8. Click **Apply correction**.
@@ -60,6 +61,22 @@ starting a new calculation. Disable it for very large images and use
 
 The embedded model is automatically rescaled for visibility. That display
 stretch does not alter the data used for correction.
+
+Bright-structure protection is enabled by default. It rejects only partial
+line candidates whose surrounding band is dominated by extended signal, such
+as a galaxy core or broad spiral arm. Complete defective rows or columns are
+never removed by this filter. The protection threshold follows the detection
+rejection limit.
+
+If no background preview is selected, the script evaluates a 3 by 3 grid and
+uses its lowest-median region. A manually selected clean background preview is
+still preferable when the target fills most of the frame.
+
+The default parameter set is:
+
+- Detection: layers 8, rejection 3, entire-line threshold 4,
+  partial-line threshold 4, image shift 50
+- Subtraction: layers 9, rejection 3, global rejection 3
 
 ## Requirements and scope
 
@@ -95,5 +112,10 @@ Benoit Blanco (BB-Astro)
 
 ## Version history
 
+- **1.1.0** (July 2026)
+  - Protect bright extended structures from false partial-line correction
+  - Show the exact post-filter selected-defect mask
+  - Select a low-signal automatic background region
+  - Adopt BB's 8/3/4/4/50 detection and 9/3/3 subtraction defaults
 - **1.0.0** (July 2026)
   - Initial one-window detection, live model, and subtraction workflow
