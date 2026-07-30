@@ -2,7 +2,7 @@
 
 **Deep Learning Cosmic Ray Removal for PixInsight**
 
-[![Version](https://img.shields.io/badge/version-2.1.3-blue)](https://github.com/BB-Astro/Pixinsight_Scripts)
+[![Version](https://img.shields.io/badge/version-2.2.0-blue)](https://github.com/BB-Astro/Pixinsight_Scripts)
 [![License](https://img.shields.io/badge/license-CC_BY--NC--SA_4.0-orange)](LICENSE)
 [![PixInsight](https://img.shields.io/badge/PixInsight-Compatible-green)](https://pixinsight.com)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11-blue)](https://www.python.org)
@@ -50,7 +50,7 @@ DeepCR uses a **convolutional neural network** trained on 15,000+ real Hubble Sp
 
 ### Requirements
 
-- **PixInsight**: Any recent version with script support
+- **PixInsight**: 1.9.4 or later for the current V8 release. The update repository retains DeepCosmicRay 2.1.3 for PixInsight 1.8.0 through 1.9.3.
 - **Python**: **3.10 or 3.11**, and both ends are hard limits (see below)
 - **OS**: macOS or Linux. The script drives Python through a shell wrapper, so Windows is not supported.
 - **RAM**: 4GB minimum, 8GB recommended
@@ -493,7 +493,7 @@ Full technical details in source code comments.
 ---
 
 **Author**: Benoit Blanco (BB-Astro)
-**Version**: 2.1
-**Release**: November 2025
+**Version**: 2.2.0
+**Release**: July 2026
 **Website**: [www.bb-astro.com](https://www.bb-astro.com)
 **License**: CC BY-NC-SA 4.0 (non-commercial)

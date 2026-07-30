@@ -10,6 +10,8 @@
 // DeepCR: Copyright (c) 2019 The Regents of the University of California, BSD-3-Clause License
 // ----------------------------------------------------------------------------
 
+#engine v8
+
 #feature-id BB_Astro_DeepCosmicRay : BB-Astro > DeepCosmicRay
 #feature-icon  ./Favicon_DeepCR.svg
 
@@ -64,17 +66,8 @@
    <br/>\
    Copyright (C) 2025 BB-Astro
 
-#include <pjsr/DataType.jsh>
-#include <pjsr/FrameStyle.jsh>
-#include <pjsr/Sizer.jsh>
-#include <pjsr/TextAlign.jsh>
-#include <pjsr/StdButton.jsh>
-#include <pjsr/StdIcon.jsh>
-#include <pjsr/UndoFlag.jsh>
-#include <pjsr/SampleType.jsh>
-
 #define TITLE "BB Astro - DeepCosmicRay"
-#define VERSION "2.1.3"
+#define VERSION "2.2.0"
 
 // UI Validation Constants
 var UI_COLOR_VALID = 0xFFFFFFFF;    // White - valid input
@@ -285,11 +278,11 @@ function offerSetup()
       "in the Console, and you can abort it there.\n\n" +
       "Choose No to get the Terminal command instead.",
       TITLE + " - Setup Required",
-      StdIcon_Question,
-      StdButton_Yes, StdButton_No
+      StdIcon.Question,
+      StdButton.Yes, StdButton.No
    )).execute();
 
-   if ( answer == StdButton_Yes )
+   if ( answer == StdButton.Yes )
       return runSetup();
 
    (new MessageBox(
@@ -300,8 +293,8 @@ function offerSetup()
       "The setup script picks a suitable interpreter for you.\n\n" +
       "Then run DeepCosmicRay again.",
       TITLE + " - Manual Setup",
-      StdIcon_Information,
-      StdButton_Ok
+      StdIcon.Information,
+      StdButton.Ok
    )).execute();
 
    return false;
@@ -526,7 +519,7 @@ function executeDeepCR() {
 
       // Create result window
       if (BBDeepCR.replaceActive) {
-         window.mainView.beginProcess(UndoFlag_NoSwapFile);
+         window.mainView.beginProcess(UndoFlag.NoSwapFile);
          window.mainView.image.assign(cleanedImage);
          window.mainView.endProcess();
          Console.writeln("Active window updated with cleaned image");
@@ -587,8 +580,8 @@ function executeDeepCR() {
       (new MessageBox(
          error.message,
          TITLE,
-         StdIcon_Error,
-         StdButton_Ok
+         StdIcon.Error,
+         StdButton.Ok
       )).execute();
    } finally {
       // Always cleanup temporary files, even on error
@@ -615,9 +608,9 @@ function executeDeepCR() {
 // User Interface
 // ----------------------------------------------------------------------------
 
-function BBDeepCRDialog() {
-   this.__base__ = Dialog;
-   this.__base__();
+var BBDeepCRDialog = class extends Dialog {
+constructor() {
+   super();
 
    var self = this;
 
@@ -634,7 +627,7 @@ function BBDeepCRDialog() {
 
    // Description and Copyright Label
    this.descriptionLabel = new Label(this);
-   this.descriptionLabel.frameStyle = FrameStyle_Box;
+   this.descriptionLabel.frameStyle = FrameStyle.Box;
    this.descriptionLabel.margin = 4;
    this.descriptionLabel.wordWrapping = true;
    this.descriptionLabel.useRichText = true;
@@ -663,7 +656,7 @@ function BBDeepCRDialog() {
    // Preset selector
    this.presetLabel = new Label(this);
    this.presetLabel.text = "Preset:";
-   this.presetLabel.textAlignment = TextAlign_Right | TextAlign_VertCenter;
+   this.presetLabel.textAlignment = TextAlignment.Right | TextAlignment.VertCenter;
    this.presetLabel.minWidth = 100;
 
    this.presetCombo = new ComboBox(this);
@@ -701,7 +694,7 @@ function BBDeepCRDialog() {
    // Model selector
    this.modelLabel = new Label(this);
    this.modelLabel.text = "Model:";
-   this.modelLabel.textAlignment = TextAlign_Right | TextAlign_VertCenter;
+   this.modelLabel.textAlignment = TextAlignment.Right | TextAlignment.VertCenter;
    this.modelLabel.minWidth = 100;
 
    this.modelCombo = new ComboBox(this);
@@ -726,7 +719,7 @@ function BBDeepCRDialog() {
    // Threshold control
    this.thresholdLabel = new Label(this);
    this.thresholdLabel.text = "Threshold:";
-   this.thresholdLabel.textAlignment = TextAlign_Right | TextAlign_VertCenter;
+   this.thresholdLabel.textAlignment = TextAlignment.Right | TextAlignment.VertCenter;
    this.thresholdLabel.minWidth = 100;
 
    this.thresholdEdit = new Edit(this);
@@ -788,8 +781,8 @@ function BBDeepCRDialog() {
             "• Threshold must be between 0.01 and 1.0\n\n" +
             "Please correct the highlighted field before running.",
             TITLE,
-            StdIcon_Warning,
-            StdButton_Ok
+            StdIcon.Warning,
+            StdButton.Ok
          ).execute();
          return;
       }
@@ -838,7 +831,7 @@ function BBDeepCRDialog() {
    this.copyrightLabel.text =
       "<small>Module © 2025 Benoit Blanco | DeepCR Library © 2019 The Regents of the University of California (BSD-3-Clause) | " +
       "Zhang &amp; Bloom (2020) ApJ 889:24</small>";
-   this.copyrightLabel.textAlignment = TextAlign_Center | TextAlign_VertCenter;
+   this.copyrightLabel.textAlignment = TextAlignment.Center | TextAlignment.VertCenter;
 
    // Layout
    this.sizer = new VerticalSizer;
@@ -903,7 +896,7 @@ function BBDeepCRDialog() {
          "L.A.Cosmic: Slightly faster, more parameters<br/><br/>" +
 
          "<b>System Requirements</b><br/>" +
-         "Python 3.7+, 4GB RAM, 500MB disk, Internet (first run)<br/><br/>" +
+         "Python 3.10 or 3.11, 4GB RAM, 850MB disk, Internet (setup only)<br/><br/>" +
 
          "<b>Citation</b><br/>" +
          "Zhang &amp; Bloom (2020), ApJ 889:24, DOI: 10.3847/1538-4357/ab3fa6<br/>" +
@@ -915,14 +908,13 @@ function BBDeepCRDialog() {
       var msgBox = new MessageBox(
          helpText,
          TITLE + " - Help",
-         StdIcon_Information,
-         StdButton_Ok
+         StdIcon.Information,
+         StdButton.Ok
       );
       msgBox.execute();
    };
 }
-
-BBDeepCRDialog.prototype = new Dialog;
+};
 
 // ----------------------------------------------------------------------------
 // Main
@@ -949,8 +941,8 @@ function main() {
       (new MessageBox(
          "There is no active image window.",
          TITLE,
-         StdIcon_Error,
-         StdButton_Ok
+         StdIcon.Error,
+         StdButton.Ok
       )).execute();
       return;
    }
@@ -975,8 +967,8 @@ function main() {
             "The setup finished but DeepCR still cannot be reached.\n\n" +
             "See the Console for details.",
             TITLE + " - Setup Incomplete",
-            StdIcon_Error,
-            StdButton_Ok
+            StdIcon.Error,
+            StdButton.Ok
          )).execute();
          return;
       }

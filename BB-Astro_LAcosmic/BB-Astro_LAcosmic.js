@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // BB-Astro_LAcosmic.js - Professional Cosmic Ray Removal for PixInsight
 // ----------------------------------------------------------------------------
-// Version: 1.0.4
+// Version: 1.1.0
 // Author: Benoit Blanco (BB)
 //
 // Implements the L.A.Cosmic algorithm (van Dokkum 2001) for detecting and
@@ -14,6 +14,8 @@
 // Copyright (c) 2024-2025 Benoit Blanco
 // Distributed under the MIT License
 // ----------------------------------------------------------------------------
+
+#engine v8
 
 #feature-id BB_Astro_LACosmic : BB-Astro > LAcosmic
 #feature-icon  ./favicon_LACOSMIC.svg
@@ -72,17 +74,8 @@
    <br/>\
    Copyright (C) 2024-2025 Benoit Blanco
 
-#include <pjsr/DataType.jsh>
-#include <pjsr/FrameStyle.jsh>
-#include <pjsr/Sizer.jsh>
-#include <pjsr/TextAlign.jsh>
-#include <pjsr/StdButton.jsh>
-#include <pjsr/StdIcon.jsh>
-#include <pjsr/UndoFlag.jsh>
-#include <pjsr/SampleType.jsh>
-
 #define TITLE "BB-Astro LACosmic"
-#define VERSION "1.0.4"
+#define VERSION "1.1.0"
 
 // Global settings object - V3 Optimized Parameters
 // Tested on NGC5335 HST data: +24.4% more CRs detected vs baseline
@@ -290,11 +283,11 @@ function offerSetup()
       "abort it there.\n\n" +
       "Choose No to get the Terminal command instead.",
       TITLE + " - Setup Required",
-      StdIcon_Question,
-      StdButton_Yes, StdButton_No
+      StdIcon.Question,
+      StdButton.Yes, StdButton.No
    )).execute();
 
-   if ( answer == StdButton_Yes )
+   if ( answer == StdButton.Yes )
       return runSetup();
 
    (new MessageBox(
@@ -305,8 +298,8 @@ function offerSetup()
       "\"pip3 install astroscrappy\" into the system interpreter is refused.\n\n" +
       "Then run LAcosmic again.",
       TITLE + " - Manual Setup",
-      StdIcon_Information,
-      StdButton_Ok
+      StdIcon.Information,
+      StdButton.Ok
    )).execute();
 
    return false;
@@ -531,7 +524,7 @@ function executeCosmicRayRemoval() {
       var cleanImage = loadFITSImage(outputPath);
 
       if (BBLACosmic.replaceActive) {
-         window.mainView.beginProcess(UndoFlag_NoSwapFile);
+         window.mainView.beginProcess(UndoFlag.NoSwapFile);
          window.mainView.image.assign(cleanImage);
          window.mainView.endProcess();
          Console.writeln("Active image replaced with cleaned version");
@@ -545,7 +538,7 @@ function executeCosmicRayRemoval() {
             cleanImage.isColor,
             originalImageName + "_LACosmic"
          );
-         cleanWindow.mainView.beginProcess(UndoFlag_NoSwapFile);
+         cleanWindow.mainView.beginProcess(UndoFlag.NoSwapFile);
          cleanWindow.mainView.image.assign(cleanImage);
          cleanWindow.mainView.endProcess();
          cleanWindow.show();
@@ -565,7 +558,7 @@ function executeCosmicRayRemoval() {
             maskImage.isColor,
             originalImageName + "_LACosmic_mask"
          );
-         maskWindow.mainView.beginProcess(UndoFlag_NoSwapFile);
+         maskWindow.mainView.beginProcess(UndoFlag.NoSwapFile);
          maskWindow.mainView.image.assign(maskImage);
          maskWindow.mainView.endProcess();
          maskWindow.show();
@@ -589,8 +582,8 @@ function executeCosmicRayRemoval() {
       new MessageBox(
          "BB-Astro LACosmic failed:\n\n" + e.message,
          TITLE,
-         StdIcon_Error,
-         StdButton_Ok
+         StdIcon.Error,
+         StdButton.Ok
       ).execute();
    }
 }
@@ -604,9 +597,9 @@ var UI_COLOR_INVALID = 0xFFFF6666;  // Light red - invalid input
 // ----------------------------------------------------------------------------
 // Dialog Class
 // ----------------------------------------------------------------------------
-function BBLACosmicDialog() {
-   this.__base__ = Dialog;
-   this.__base__();
+var BBLACosmicDialog = class extends Dialog {
+constructor() {
+   super();
 
    var self = this;
    this.windowTitle = TITLE + " v" + VERSION;
@@ -621,7 +614,7 @@ function BBLACosmicDialog() {
 
    // Help label
    this.helpLabel = new Label(this);
-   this.helpLabel.frameStyle = FrameStyle_Box;
+   this.helpLabel.frameStyle = FrameStyle.Box;
    this.helpLabel.margin = 4;
    this.helpLabel.wordWrapping = true;
    this.helpLabel.useRichText = true;
@@ -656,7 +649,7 @@ function BBLACosmicDialog() {
    // Sigma clipping
    this.sigclipLabel = new Label(this);
    this.sigclipLabel.text = "Sigma clipping:";
-   this.sigclipLabel.textAlignment = TextAlign_Right | TextAlign_VertCenter;
+   this.sigclipLabel.textAlignment = TextAlignment.Right | TextAlignment.VertCenter;
    this.sigclipLabel.setFixedWidth(130);
 
    this.sigclipEdit = new Edit(this);
@@ -686,7 +679,7 @@ function BBLACosmicDialog() {
    // Object limit
    this.objlimLabel = new Label(this);
    this.objlimLabel.text = "Object limit:";
-   this.objlimLabel.textAlignment = TextAlign_Right | TextAlign_VertCenter;
+   this.objlimLabel.textAlignment = TextAlignment.Right | TextAlignment.VertCenter;
    this.objlimLabel.setFixedWidth(130);
 
    this.objlimEdit = new Edit(this);
@@ -716,7 +709,7 @@ function BBLACosmicDialog() {
    // Read noise
    this.readnoiseLabel = new Label(this);
    this.readnoiseLabel.text = "Read noise (e-):";
-   this.readnoiseLabel.textAlignment = TextAlign_Right | TextAlign_VertCenter;
+   this.readnoiseLabel.textAlignment = TextAlignment.Right | TextAlignment.VertCenter;
    this.readnoiseLabel.setFixedWidth(130);
 
    this.readnoiseEdit = new Edit(this);
@@ -746,7 +739,7 @@ function BBLACosmicDialog() {
    // Gain
    this.gainLabel = new Label(this);
    this.gainLabel.text = "Gain (e-/ADU):";
-   this.gainLabel.textAlignment = TextAlign_Right | TextAlign_VertCenter;
+   this.gainLabel.textAlignment = TextAlignment.Right | TextAlignment.VertCenter;
    this.gainLabel.setFixedWidth(130);
 
    this.gainEdit = new Edit(this);
@@ -776,7 +769,7 @@ function BBLACosmicDialog() {
    // Iterations
    this.niterLabel = new Label(this);
    this.niterLabel.text = "Iterations:";
-   this.niterLabel.textAlignment = TextAlign_Right | TextAlign_VertCenter;
+   this.niterLabel.textAlignment = TextAlignment.Right | TextAlignment.VertCenter;
    this.niterLabel.setFixedWidth(130);
 
    this.niterSpin = new SpinBox(this);
@@ -853,8 +846,8 @@ function BBLACosmicDialog() {
             "• " + invalidFields.join("\n• ") + "\n\n" +
             "Please correct the highlighted fields before running.",
             TITLE,
-            StdIcon_Warning,
-            StdButton_Ok
+            StdIcon.Warning,
+            StdButton.Ok
          ).execute();
          return;
       }
@@ -1014,14 +1007,13 @@ function BBLACosmicDialog() {
       var msgBox = new MessageBox(
          helpText,
          TITLE + " - Help",
-         StdIcon_Information,
-         StdButton_Ok
+         StdIcon.Information,
+         StdButton.Ok
       );
       msgBox.execute();
    };
 }
-
-BBLACosmicDialog.prototype = new Dialog;
+};
 
 // ----------------------------------------------------------------------------
 // Main Execution
@@ -1068,8 +1060,8 @@ function main() {
          "No active image.\n\n" +
          "Please open an image before running this script.",
          TITLE,
-         StdIcon_Warning,
-         StdButton_Ok
+         StdIcon.Warning,
+         StdButton.Ok
       ).execute();
       return;
    }
@@ -1093,8 +1085,8 @@ function main() {
             "The setup finished but astroscrappy still cannot be reached.\n\n" +
             "See the Console for details.",
             TITLE + " - Setup Incomplete",
-            StdIcon_Error,
-            StdButton_Ok
+            StdIcon.Error,
+            StdButton.Ok
          ).execute();
          return;
       }

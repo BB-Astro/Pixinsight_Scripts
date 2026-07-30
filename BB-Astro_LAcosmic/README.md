@@ -30,7 +30,7 @@ BB-Astro LACosmic detects and removes cosmic ray hits from your astronomical ima
 
 ### Requirements
 
-- **PixInsight** (any recent version)
+- **PixInsight 1.9.4 or later** for the current V8 release. The update repository retains LAcosmic 1.0.4 for PixInsight 1.8.0 through 1.9.3.
 - **Python 3.10 or later**, matching astroscrappy's `requires_python >=3.10`
 - **macOS or Linux.** The script drives Python through a shell wrapper, so Windows is not supported.
 

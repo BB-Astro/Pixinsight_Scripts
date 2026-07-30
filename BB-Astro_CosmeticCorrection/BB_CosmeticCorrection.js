@@ -7,6 +7,8 @@
    Created by BB (Ben) - 2025
 */
 
+#engine v8
+
 #feature-id    BB_CosmeticCorrection : BB-Astro > CosmeticCorrection
 #feature-icon  ./Favicon_CosmeticCorrection.svg
 
@@ -16,20 +18,11 @@
                "Copyright &copy; 2025 BB"
 
 #define TITLE  "BB Cosmetic Correction"
-#define VERSION "2.1.0"
+#define VERSION "2.2.0"
 
 // UI Validation Constants
 var UI_COLOR_VALID = 0xFFFFFFFF;    // White - valid input
 var UI_COLOR_INVALID = 0xFFFF6666;  // Light red - invalid input
-
-#include <pjsr/Sizer.jsh>
-#include <pjsr/FrameStyle.jsh>
-#include <pjsr/TextAlign.jsh>
-#include <pjsr/StdButton.jsh>
-#include <pjsr/StdIcon.jsh>
-#include <pjsr/StdCursor.jsh>
-#include <pjsr/UndoFlag.jsh>
-#include <pjsr/NumericControl.jsh>
 
 // Script data
 function CosmeticCorrectionData()
@@ -84,10 +77,10 @@ function importParameters() {
 }
 
 // Main Dialog
-function CosmeticCorrectionDialog()
+var CosmeticCorrectionDialog = class extends Dialog {
+constructor()
 {
-   this.__base__ = Dialog;
-   this.__base__();
+   super();
 
    var dialog = this;
 
@@ -95,7 +88,7 @@ function CosmeticCorrectionDialog()
 
    // Help label
    this.helpLabel = new Label(this);
-   this.helpLabel.frameStyle = FrameStyle_Box;
+   this.helpLabel.frameStyle = FrameStyle.Box;
    this.helpLabel.margin = 4;
    this.helpLabel.wordWrapping = true;
    this.helpLabel.useRichText = true;
@@ -106,7 +99,7 @@ function CosmeticCorrectionDialog()
    // Target view selection
    this.targetView_Label = new Label(this);
    this.targetView_Label.text = "Target View:";
-   this.targetView_Label.textAlignment = TextAlign_Right | TextAlign_VertCenter;
+   this.targetView_Label.textAlignment = TextAlignment.Right | TextAlignment.VertCenter;
    this.targetView_Label.minWidth = labelWidth1;
 
    this.targetView_ViewList = new ViewList(this);
@@ -144,7 +137,7 @@ function CosmeticCorrectionDialog()
    // Process Icon ID field
    this.processIcon_Label = new Label(this);
    this.processIcon_Label.text = "Process Icon ID:";
-   this.processIcon_Label.textAlignment = TextAlign_Right | TextAlign_VertCenter;
+   this.processIcon_Label.textAlignment = TextAlignment.Right | TextAlignment.VertCenter;
    this.processIcon_Label.minWidth = labelWidth1;
 
    this.processIcon_Edit = new Edit(this);
@@ -207,7 +200,7 @@ function CosmeticCorrectionDialog()
 
    // Validation status label
    this.validationStatus_Label = new Label(this);
-   this.validationStatus_Label.textAlignment = TextAlign_Left | TextAlign_VertCenter;
+   this.validationStatus_Label.textAlignment = TextAlignment.Left | TextAlignment.VertCenter;
    this.validationStatus_Label.useRichText = true;
    this.autoDetect_GroupBox.sizer.add(this.validationStatus_Label);
 
@@ -304,8 +297,8 @@ function CosmeticCorrectionDialog()
          var msg = new MessageBox(
             "No active view! Open an image first.",
             TITLE,
-            StdIcon_Error,
-            StdButton_Ok
+            StdIcon.Error,
+            StdButton.Ok
          );
          msg.execute();
          return;
@@ -319,8 +312,8 @@ function CosmeticCorrectionDialog()
             var msg = new MessageBox(
                "Enter the process icon ID!",
                TITLE,
-               StdIcon_Error,
-               StdButton_Ok
+               StdIcon.Error,
+               StdButton.Ok
             );
             msg.execute();
             return;
@@ -332,8 +325,8 @@ function CosmeticCorrectionDialog()
             var msg = new MessageBox(
                "Process icon '" + data.processIconId + "' does not exist!",
                TITLE,
-               StdIcon_Error,
-               StdButton_Ok
+               StdIcon.Error,
+               StdButton.Ok
             );
             msg.execute();
             return;
@@ -344,8 +337,8 @@ function CosmeticCorrectionDialog()
             var msg = new MessageBox(
                "Icon '" + data.processIconId + "' is not a CosmeticCorrection instance!",
                TITLE,
-               StdIcon_Error,
-               StdButton_Ok
+               StdIcon.Error,
+               StdButton.Ok
             );
             msg.execute();
             return;
@@ -406,8 +399,7 @@ function CosmeticCorrectionDialog()
    this.windowTitle = TITLE + " v" + VERSION;
    this.adjustToContents();
 }
-
-CosmeticCorrectionDialog.prototype = new Dialog;
+};
 
 // Main execution function
 function applyCosmeticCorrection()
@@ -513,7 +505,7 @@ function applyCosmeticCorrection()
       var resultView = resultWindow.mainView;
 
       // Copy result to original view
-      data.targetView.beginProcess(UndoFlag_PixelData);
+      data.targetView.beginProcess(UndoFlag.PixelData);
       data.targetView.image.assign(resultView.image);
       data.targetView.endProcess();
 
@@ -527,8 +519,8 @@ function applyCosmeticCorrection()
       var msg = new MessageBox(
          "Cosmetic correction applied successfully on " + data.targetView.fullId + "!",
          TITLE,
-         StdIcon_Information,
-         StdButton_Ok
+         StdIcon.Information,
+         StdButton.Ok
       );
       msg.execute();
    }
@@ -541,8 +533,8 @@ function applyCosmeticCorrection()
       var msg = new MessageBox(
          "Error applying correction:\n\n" + error,
          TITLE,
-         StdIcon_Error,
-         StdButton_Ok
+         StdIcon.Error,
+         StdButton.Ok
       );
       msg.execute();
    }
@@ -579,8 +571,8 @@ function main()
       var msg = new MessageBox(
          "No active image! Open an image first.",
          TITLE,
-         StdIcon_Error,
-         StdButton_Ok
+         StdIcon.Error,
+         StdButton.Ok
       );
       msg.execute();
       return;

@@ -32,7 +32,7 @@ The script uses automatic detection based on sigma thresholds to identify and co
 
 ### Requirements
 
-- **PixInsight**: Any recent version with script support
+- **PixInsight**: 1.9.4 or later for the current V8 release. The update repository retains CosmeticCorrection 2.1.0 for PixInsight 1.8.0 through 1.9.3.
 - **No Python.** This script is pure PJSR and works on every platform PixInsight runs on.
 
 ### Install in PixInsight
@@ -164,6 +164,11 @@ Website: [www.bb-astro.com](https://www.bb-astro.com)
 ---
 
 ## Version History
+
+- **v2.2.0** (July 2026)
+  - Ported the script to PixInsight's V8 JavaScript runtime
+  - Added native Apple Silicon compatibility
+  - Preserved Linux compatibility
 
 - **v2.1.0** (November 2025)
   - Added process icon support (triangle button)
