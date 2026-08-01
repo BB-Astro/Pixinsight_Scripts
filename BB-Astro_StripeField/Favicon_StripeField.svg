@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="sf-bg" x1="5" y1="4" x2="59" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#182941"/>
+      <stop offset="1" stop-color="#090f1b"/>
+    </linearGradient>
+    <linearGradient id="sf-band" x1="8" y1="0" x2="37" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff6b8a"/>
+      <stop offset="1" stop-color="#c44dff"/>
+    </linearGradient>
+    <linearGradient id="sf-wave" x1="0" y1="9" x2="0" y2="55" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7ce8ff"/>
+      <stop offset="0.5" stop-color="#4ed6c3"/>
+      <stop offset="1" stop-color="#7ce8ff"/>
+    </linearGradient>
+    <clipPath id="sf-left">
+      <rect x="5" y="5" width="27" height="54"/>
+    </clipPath>
+    <clipPath id="sf-right">
+      <rect x="32" y="5" width="27" height="54"/>
+    </clipPath>
+  </defs>
+
+  <rect x="2" y="2" width="60" height="60" rx="12"
+        fill="url(#sf-bg)" stroke="#8db9ea" stroke-width="2"/>
+
+  <g clip-path="url(#sf-left)" fill="none" stroke="url(#sf-band)"
+     stroke-width="3.4" stroke-linecap="round">
+    <path d="M-6 16L38 5"/>
+    <path d="M-5 26L39 15"/>
+    <path d="M-4 36L40 25"/>
+    <path d="M-3 46L41 35"/>
+    <path d="M-2 56L42 45"/>
+    <path d="M4 64L43 54"/>
+  </g>
+
+  <g clip-path="url(#sf-right)" fill="none" stroke="#66819f"
+     stroke-width="1.2" stroke-linecap="round" opacity="0.24">
+    <path d="M25 8L70-3"/>
+    <path d="M26 18L71 7"/>
+    <path d="M27 28L72 17"/>
+    <path d="M28 38L73 27"/>
+    <path d="M29 48L74 37"/>
+    <path d="M30 58L75 47"/>
+    <path d="M35 67L76 57"/>
+  </g>
+
+  <path d="M32 8C23 17 40 25 31 33C23 41 39 48 32 56"
+        fill="none" stroke="#07111d" stroke-width="6"
+        stroke-linecap="round"/>
+  <path d="M32 8C23 17 40 25 31 33C23 41 39 48 32 56"
+        fill="none" stroke="url(#sf-wave)" stroke-width="3"
+        stroke-linecap="round"/>
+
+  <g fill="#d9f8ff">
+    <circle cx="45" cy="15" r="1.5"/>
+    <circle cx="52" cy="31" r="1.1"/>
+    <circle cx="42" cy="44" r="1.1"/>
+    <circle cx="53" cy="52" r="1.7"/>
+  </g>
+  <path d="M46 22v6M43 25h6" stroke="#ffffff" stroke-width="1.2"
+        stroke-linecap="round" opacity="0.9"/>
+</svg>
