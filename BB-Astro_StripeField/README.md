@@ -179,6 +179,12 @@ documentation; the method description now stands on its own. The public
 package bundles the scientific engine and provides guided Python setup on
 macOS and Linux.
 
+Version 0.2.6 simplifies the main dialog wording, removes the machine-specific
+runtime estimate and adds the standard PixInsight new-instance triangle. A
+workspace icon stores all model and output parameters. Double-clicking it
+reopens the configured dialog, while dropping it on an image runs StripeField
+directly on that view.
+
 The current scientific engine deliberately uses one worker. It sees all 12
 logical processors on the Mac Studio, but the greedy passes are sequential
 because each pass must operate on the correction produced by the preceding

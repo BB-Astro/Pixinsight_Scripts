@@ -14,7 +14,7 @@
 #feature-id    BB_StripeField : BB-Astro > StripeField
 #feature-icon  ./Favicon_StripeField.svg
 
-#feature-info  "<b>BB StripeField v0.2.5</b><br><br>" +
+#feature-info  "<b>BB StripeField v0.2.6</b><br><br>" +
                "Model and subtract weak, arbitrarily oriented row-bias fields " +
                "from linear Hubble mosaics. Includes source masking, a " +
                "noise-corrected angle search, robust profile estimation, " +
@@ -23,7 +23,7 @@
 #endif
 
 #define TITLE   "BB StripeField"
-#define VERSION "0.2.5"
+#define VERSION "0.2.6"
 
 #include <pjsr/FrameStyle.jsh>
 #include <pjsr/StdButton.jsh>
@@ -80,6 +80,41 @@ function BBSFData()
 
    this.showStripeModel = true;
    this.replaceTarget = false;
+}
+
+function bbsfExportParameters( data )
+{
+   Parameters.set( "maxIterations", data.maxIterations );
+   Parameters.set( "significance", data.significance );
+   Parameters.set( "backgroundSigma", data.backgroundSigma );
+   Parameters.set( "sourceMaskSigma", data.sourceMaskSigma );
+   Parameters.set( "detrendSigma", data.detrendSigma );
+   Parameters.set( "useWindowedProfile", data.useWindowedProfile );
+   Parameters.set( "windowSize", data.windowSize );
+   Parameters.set( "showStripeModel", data.showStripeModel );
+   Parameters.set( "replaceTarget", data.replaceTarget );
+}
+
+function bbsfImportParameters( data )
+{
+   if ( Parameters.has( "maxIterations" ) )
+      data.maxIterations = Parameters.getInteger( "maxIterations" );
+   if ( Parameters.has( "significance" ) )
+      data.significance = Parameters.getReal( "significance" );
+   if ( Parameters.has( "backgroundSigma" ) )
+      data.backgroundSigma = Parameters.getReal( "backgroundSigma" );
+   if ( Parameters.has( "sourceMaskSigma" ) )
+      data.sourceMaskSigma = Parameters.getReal( "sourceMaskSigma" );
+   if ( Parameters.has( "detrendSigma" ) )
+      data.detrendSigma = Parameters.getReal( "detrendSigma" );
+   if ( Parameters.has( "useWindowedProfile" ) )
+      data.useWindowedProfile = Parameters.getBoolean( "useWindowedProfile" );
+   if ( Parameters.has( "windowSize" ) )
+      data.windowSize = Parameters.getInteger( "windowSize" );
+   if ( Parameters.has( "showStripeModel" ) )
+      data.showStripeModel = Parameters.getBoolean( "showStripeModel" );
+   if ( Parameters.has( "replaceTarget" ) )
+      data.replaceTarget = Parameters.getBoolean( "replaceTarget" );
 }
 
 function bbsfWrapperPath()
@@ -667,14 +702,14 @@ function bbsfExecute( data )
 
       Console.show();
       bbsfPrintBanner();
-      Console.writeln( "Validated Hubble profile" );
+      Console.writeln( "StripeField profile" );
       Console.writeln( "Target: " + data.targetView.fullId );
       Console.writeln( "Python: " + dependencies.python );
       Console.writeln(
          "Profile: " +
          ( data.useWindowedProfile ?
            "global plus along-stripe windowed component" :
-           "global Hubble profile" )
+           "global profile" )
       );
       Console.writeln(
          "Parameters: max passes=" + data.maxIterations +
@@ -725,10 +760,7 @@ function bbsfExecute( data )
       ];
 
       Console.writeln( "<b>Estimating and subtracting stripe families...</b>" );
-      Console.writeln(
-         "This normally takes 5 to 10 minutes for a 4k Hubble mosaic. " +
-         "Use the Console abort button to stop."
-      );
+      Console.writeln( "Use the Console abort button to stop." );
       Console.flush();
 
       var timer = new ElapsedTime;
@@ -846,13 +878,11 @@ function bbsfMethodHelpText()
       "can be far below the pixel noise, but they remain visible because the",
       "error is coherent over thousands of pixels.",
       "",
-      "CURRENT SCOPE",
+      "INPUT REQUIREMENTS",
       "",
-      "The validated mode is for linear, monochrome Hubble mosaics. Do not use a",
+      "Use a linear, monochrome image. Do not use a",
       "strongly stretched image: stretching changes the noise distribution, the",
-      "source mask and the Wiener weights. The present JWST path is not",
-      "validated because final JWST mosaics combine zone-dependent stripe",
-      "families, detector footprints and exposure seams.",
+      "source mask and the Wiener weights.",
       "",
       "DATA MODEL",
       "",
@@ -942,11 +972,11 @@ function bbsfMethodHelpText()
       "selected significance threshold or when Maximum passes is reached.",
       "Several neighboring angles can approximate slight drizzle curvature.",
       "",
-      "HUBBLE PROFILE MODE",
+      "PROFILE MODE",
       "",
       "The default model assumes a stripe is constant along u. This global",
-      "profile was selected because the optional windowed component shrank to",
-      "zero in all three validated Hubble mosaics. The experimental windowed",
+      "profile is the default because the optional windowed component shrank to",
+      "zero in the reference mosaics. The experimental windowed",
       "option allows slow variation along u, but should remain disabled unless",
       "the signed model demonstrates a real need. In windowed mode, the",
       "per-cell noise variance accounts for the effective sample count after",
@@ -955,22 +985,22 @@ function bbsfMethodHelpText()
       "PARAMETER GUIDANCE",
       "",
       "Maximum passes",
-      "  Upper limit on accepted angle families. Twelve is validated.",
+      "  Upper limit on accepted angle families. The default is twelve.",
       "",
       "Stopping significance",
-      "  Higher values are more conservative. Five sigma is validated.",
+      "  Higher values are more conservative. The default is five sigma.",
       "",
       "Background smoothing",
       "  Large-scale normalized Gaussian radius. One hundred pixels is",
-      "  validated for the test mosaics.",
+      "  the default for the reference mosaics.",
       "",
       "Source mask threshold",
-      "  Lower values mask more astronomical signal. Three MAD is validated.",
+      "  Lower values mask more astronomical signal. The default is three MAD.",
       "",
       "Transverse detrending",
       "  Larger values allow broader bands into the removed field but increase",
       "  the risk of subtracting real sky structure. Twenty-five pixels is",
-      "  validated.",
+      "  the default.",
       "",
       "QUALITY CONTROL",
       "",
@@ -1055,12 +1085,12 @@ constructor( data )
    this.helpLabel.useRichText = true;
    this.helpLabel.text =
       "<p><b>" + TITLE + " v" + VERSION + "</b></p>" +
-      "<p>Validated Hubble release. It detects arbitrarily oriented " +
+      "<p>Detects arbitrarily oriented " +
       "row-bias fields, masks astronomical sources, estimates robust " +
       "transverse profiles and applies Wiener shrinkage before subtraction. " +
       "The science image is never rotated or resampled.</p>" +
-      "<p><b>Use a linear, monochrome image.</b> The JWST case is not validated " +
-      "by this version.</p>";
+      "<p><b>Use a linear, monochrome image.</b> Inspect the signed model before " +
+      "keeping the correction.</p>";
 
    this.targetLabel = new Label( this );
    this.targetLabel.text = "Target image:";
@@ -1128,7 +1158,7 @@ constructor( data )
    }
 
    this.modelGroup = new GroupBox( this );
-   this.modelGroup.title = "Validated Hubble model";
+   this.modelGroup.title = "Stripe-field model";
    this.modelGroup.sizer = new VerticalSizer;
    this.modelGroup.sizer.margin = 8;
    this.modelGroup.sizer.spacing = 6;
@@ -1139,7 +1169,7 @@ constructor( data )
       30,
       data.maxIterations,
       "<p>Maximum number of greedy angle-detection and subtraction passes. " +
-      "Validated default: 12.</p>",
+      "Default: 12.</p>",
       function( value )
       {
          dialog.data.maxIterations = value;
@@ -1154,7 +1184,7 @@ constructor( data )
       2,
       data.significance,
       "<p>Stop when the strongest remaining stripe angle is below this " +
-      "significance. Validated default: 5 sigma.</p>",
+      "significance. Default: 5 sigma.</p>",
       function( value )
       {
          dialog.data.significance = value;
@@ -1169,7 +1199,7 @@ constructor( data )
       1,
       data.backgroundSigma,
       "<p>Gaussian scale in pixels used for the normalized large-scale " +
-      "background model. Validated default: 100 px.</p>",
+      "background model. Default: 100 px.</p>",
       function( value )
       {
          dialog.data.backgroundSigma = value;
@@ -1184,7 +1214,7 @@ constructor( data )
       2,
       data.sourceMaskSigma,
       "<p>Iterative MAD clipping threshold used to exclude galaxies, stars " +
-      "and diffraction spikes. Validated default: 3 MAD.</p>",
+      "and diffraction spikes. Default: 3 MAD.</p>",
       function( value )
       {
          dialog.data.sourceMaskSigma = value;
@@ -1199,8 +1229,8 @@ constructor( data )
       1,
       data.detrendSigma,
       "<p>High-pass scale across the stripes. Increasing it removes broader " +
-      "bands but raises the risk of subtracting real background. Validated " +
-      "default: 25 px.</p>",
+      "bands but raises the risk of subtracting real background. Default: " +
+      "25 px.</p>",
       function( value )
       {
          dialog.data.detrendSigma = value;
@@ -1210,11 +1240,11 @@ constructor( data )
 
    this.windowedCheck = new CheckBox( this );
    this.windowedCheck.text =
-      "Allow slow variation along each stripe (experimental for Hubble)";
+      "Allow slow variation along each stripe (experimental)";
    this.windowedCheck.checked = data.useWindowedProfile;
    this.windowedCheck.toolTip =
       "<p>Enables an additional windowed 2-D component. It was suppressed " +
-      "automatically by Wiener shrinkage in all three validated Hubble tests, " +
+      "automatically by Wiener shrinkage in the reference tests, " +
       "so it is disabled by default.</p>";
    this.windowedCheck.onCheck = function( checked )
    {
@@ -1230,7 +1260,7 @@ constructor( data )
       4096,
       data.windowSize,
       "<p>Window size in pixels for the optional along-stripe component. " +
-      "Validated experimental value: 1024 px.</p>",
+      "Default: 1024 px.</p>",
       function( value )
       {
          dialog.data.windowSize = value;
@@ -1271,12 +1301,10 @@ constructor( data )
       "<p><b>Quality gate:</b> the signed model must contain stripe structure " +
       "only. If a galaxy, halo, star or tidal feature is visible in the model, " +
       "discard the correction and increase source protection or reduce the " +
-      "transverse detrending scale.</p>" +
-      "<p>Typical runtime on the Mac Studio M2 Max: 5 to 10 minutes for a 4k " +
-      "Hubble mosaic.</p>";
+      "transverse detrending scale.</p>";
 
    this.executeButton = new PushButton( this );
-   this.executeButton.text = "Run Hubble StripeField";
+   this.executeButton.text = "Run StripeField";
    this.executeButton.icon = this.scaledResource( ":/icons/power.png" );
    this.executeButton.onClick = function()
    {
@@ -1312,8 +1340,24 @@ constructor( data )
       ( new BBSFHelpDialog ).execute();
    };
 
+   this.newInstanceButton = new ToolButton( this );
+   this.newInstanceButton.icon =
+      this.scaledResource( ":/process-interface/new-instance.png" );
+   this.newInstanceButton.setScaledFixedSize( 24, 24 );
+   this.newInstanceButton.toolTip =
+      "<p>Drag to the workspace to create a StripeField process icon with " +
+      "the current settings.</p>";
+   this.newInstanceButton.onMousePress = function()
+   {
+      this.hasFocus = true;
+      this.pushed = false;
+      bbsfExportParameters( dialog.data );
+      dialog.newInstance();
+   };
+
    this.buttonSizer = new HorizontalSizer;
    this.buttonSizer.spacing = 6;
+   this.buttonSizer.add( this.newInstanceButton );
    this.buttonSizer.add( this.methodHelpButton );
    this.buttonSizer.addStretch();
    this.buttonSizer.add( this.executeButton );
@@ -1337,19 +1381,26 @@ constructor( data )
 
 function main()
 {
-   if ( Parameters.isViewTarget )
-      throw new Error( TITLE + " must be launched from the Script menu." );
+   var data = new BBSFData;
+   if ( Parameters.isGlobalTarget || Parameters.isViewTarget )
+      bbsfImportParameters( data );
 
-   var activeWindow = ImageWindow.activeWindow;
-   if ( activeWindow == null || activeWindow.isNull )
+   if ( Parameters.isViewTarget )
+      data.targetView = Parameters.targetView;
+   else
    {
-      ( new MessageBox(
-         "Open a linear monochrome Hubble image before launching " + TITLE + ".",
-         TITLE,
-         StdIcon_Warning,
-         StdButton_Ok
-      ) ).execute();
-      return;
+      var activeWindow = ImageWindow.activeWindow;
+      if ( activeWindow == null || activeWindow.isNull )
+      {
+         ( new MessageBox(
+            "Open a linear monochrome image before launching " + TITLE + ".",
+            TITLE,
+            StdIcon_Warning,
+            StdButton_Ok
+         ) ).execute();
+         return;
+      }
+      data.targetView = activeWindow.mainView;
    }
 
    Console.show();
@@ -1380,8 +1431,12 @@ function main()
    Console.noteln( "Python OK: " + dependencies.python );
    Console.hide();
 
-   var data = new BBSFData;
-   data.targetView = activeWindow.mainView;
+   if ( Parameters.isViewTarget )
+   {
+      bbsfExecute( data );
+      return;
+   }
+
    var dialog = new BBSFDialog( data );
    if ( dialog.execute() == StdDialogCode_Ok )
       bbsfExecute( data );

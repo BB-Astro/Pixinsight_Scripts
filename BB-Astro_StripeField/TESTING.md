@@ -1,6 +1,6 @@
 # BB StripeField validation
 
-Validation date: 2026-07-31, amended 2026-08-01 for v0.2.5
+Validation date: 2026-07-31, amended 2026-08-01 for v0.2.6
 
 Environment:
 
@@ -177,6 +177,18 @@ Verification performed on 2026-08-01:
 The full PixInsight smoke tests documented above were not re-run for v0.2.5;
 their v0.2.4 results remain the reference for the bridge, undo and progress
 behavior.
+
+## Process-instance and dialog wording (v0.2.6)
+
+Version 0.2.6 adds the standard PixInsight new-instance triangle to the main
+dialog. The exported instance stores every model and output parameter except
+the target view. A global instance imports those settings before reopening the
+dialog. A view-target instance imports them, takes `Parameters.targetView` as
+its target and runs directly.
+
+The main dialog no longer contains Hubble/JWST validation status or a
+machine-specific runtime estimate. These presentation changes do not modify
+the Python engine or the numerical defaults.
 
 ## Public package validation
 
