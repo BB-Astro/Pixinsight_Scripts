@@ -31,7 +31,7 @@ else
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REQUIREMENTS="${SCRIPT_DIR}/requirements.txt"
+REQUIREMENTS="${SCRIPT_DIR}/stripefield_requirements.txt"
 INSTALL_DIR="${HOME}/.bb-astro"
 VENV_DIR="${INSTALL_DIR}/stripefield_venv"
 
@@ -42,7 +42,7 @@ echo "======================================================================"
 echo ""
 
 if [ ! -f "${REQUIREMENTS}" ]; then
-    echo -e "${RED}ERROR:${NC} requirements.txt was not found at ${REQUIREMENTS}"
+    echo -e "${RED}ERROR:${NC} stripefield_requirements.txt was not found at ${REQUIREMENTS}"
     echo "Reinstall StripeField from the BB-Astro PixInsight repository."
     exit 1
 fi

@@ -184,7 +184,7 @@ The public 0.2.5 source tree bundles `destripe_astro.py` next to the PixInsight
 script. `run_stripefield.sh` resolves that bundled engine instead of relying on
 the private development project. `install_stripefield.sh` creates the dedicated
 `~/.bb-astro/stripefield_venv` environment on macOS or Linux and installs the
-versions constrained by `requirements.txt`.
+versions constrained by `stripefield_requirements.txt`.
 
 Release checks completed on 2026-08-01:
 
